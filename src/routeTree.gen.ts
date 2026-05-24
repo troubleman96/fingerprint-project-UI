@@ -9,38 +9,269 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppAppSettingsRouteImport } from './routes/_app.app.settings'
+import { Route as AppAppReportsRouteImport } from './routes/_app.app.reports'
+import { Route as AppAppDashboardRouteImport } from './routes/_app.app.dashboard'
+import { Route as AppAppAuditRouteImport } from './routes/_app.app.audit'
+import { Route as AppAppUsersIndexRouteImport } from './routes/_app.app.users.index'
+import { Route as AppAppStudentsIndexRouteImport } from './routes/_app.app.students.index'
+import { Route as AppAppCasesIndexRouteImport } from './routes/_app.app.cases.index'
+import { Route as AppAppBiometricIndexRouteImport } from './routes/_app.app.biometric.index'
+import { Route as AppAppUsersNewRouteImport } from './routes/_app.app.users.new'
+import { Route as AppAppStudentsNewRouteImport } from './routes/_app.app.students.new'
+import { Route as AppAppStudentsIdRouteImport } from './routes/_app.app.students.$id'
+import { Route as AppAppCasesNewRouteImport } from './routes/_app.app.cases.new'
+import { Route as AppAppCasesIdRouteImport } from './routes/_app.app.cases.$id'
+import { Route as AppAppBiometricEnrollRouteImport } from './routes/_app.app.biometric.enroll'
+import { Route as AppAppStudentsIdEditRouteImport } from './routes/_app.app.students.$id.edit'
+import { Route as AppAppCasesIdEditRouteImport } from './routes/_app.app.cases.$id.edit'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAppSettingsRoute = AppAppSettingsRouteImport.update({
+  id: '/app/settings',
+  path: '/app/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppReportsRoute = AppAppReportsRouteImport.update({
+  id: '/app/reports',
+  path: '/app/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppDashboardRoute = AppAppDashboardRouteImport.update({
+  id: '/app/dashboard',
+  path: '/app/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppAuditRoute = AppAppAuditRouteImport.update({
+  id: '/app/audit',
+  path: '/app/audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppUsersIndexRoute = AppAppUsersIndexRouteImport.update({
+  id: '/app/users/',
+  path: '/app/users/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppStudentsIndexRoute = AppAppStudentsIndexRouteImport.update({
+  id: '/app/students/',
+  path: '/app/students/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppCasesIndexRoute = AppAppCasesIndexRouteImport.update({
+  id: '/app/cases/',
+  path: '/app/cases/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppBiometricIndexRoute = AppAppBiometricIndexRouteImport.update({
+  id: '/app/biometric/',
+  path: '/app/biometric/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppUsersNewRoute = AppAppUsersNewRouteImport.update({
+  id: '/app/users/new',
+  path: '/app/users/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppStudentsNewRoute = AppAppStudentsNewRouteImport.update({
+  id: '/app/students/new',
+  path: '/app/students/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppStudentsIdRoute = AppAppStudentsIdRouteImport.update({
+  id: '/app/students/$id',
+  path: '/app/students/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppCasesNewRoute = AppAppCasesNewRouteImport.update({
+  id: '/app/cases/new',
+  path: '/app/cases/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppCasesIdRoute = AppAppCasesIdRouteImport.update({
+  id: '/app/cases/$id',
+  path: '/app/cases/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppBiometricEnrollRoute = AppAppBiometricEnrollRouteImport.update({
+  id: '/app/biometric/enroll',
+  path: '/app/biometric/enroll',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppStudentsIdEditRoute = AppAppStudentsIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AppAppStudentsIdRoute,
+} as any)
+const AppAppCasesIdEditRoute = AppAppCasesIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AppAppCasesIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/app/audit': typeof AppAppAuditRoute
+  '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/reports': typeof AppAppReportsRoute
+  '/app/settings': typeof AppAppSettingsRoute
+  '/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
+  '/app/cases/$id': typeof AppAppCasesIdRouteWithChildren
+  '/app/cases/new': typeof AppAppCasesNewRoute
+  '/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
+  '/app/students/new': typeof AppAppStudentsNewRoute
+  '/app/users/new': typeof AppAppUsersNewRoute
+  '/app/biometric/': typeof AppAppBiometricIndexRoute
+  '/app/cases/': typeof AppAppCasesIndexRoute
+  '/app/students/': typeof AppAppStudentsIndexRoute
+  '/app/users/': typeof AppAppUsersIndexRoute
+  '/app/cases/$id/edit': typeof AppAppCasesIdEditRoute
+  '/app/students/$id/edit': typeof AppAppStudentsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/app/audit': typeof AppAppAuditRoute
+  '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/reports': typeof AppAppReportsRoute
+  '/app/settings': typeof AppAppSettingsRoute
+  '/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
+  '/app/cases/$id': typeof AppAppCasesIdRouteWithChildren
+  '/app/cases/new': typeof AppAppCasesNewRoute
+  '/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
+  '/app/students/new': typeof AppAppStudentsNewRoute
+  '/app/users/new': typeof AppAppUsersNewRoute
+  '/app/biometric': typeof AppAppBiometricIndexRoute
+  '/app/cases': typeof AppAppCasesIndexRoute
+  '/app/students': typeof AppAppStudentsIndexRoute
+  '/app/users': typeof AppAppUsersIndexRoute
+  '/app/cases/$id/edit': typeof AppAppCasesIdEditRoute
+  '/app/students/$id/edit': typeof AppAppStudentsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/app/audit': typeof AppAppAuditRoute
+  '/_app/app/dashboard': typeof AppAppDashboardRoute
+  '/_app/app/reports': typeof AppAppReportsRoute
+  '/_app/app/settings': typeof AppAppSettingsRoute
+  '/_app/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
+  '/_app/app/cases/$id': typeof AppAppCasesIdRouteWithChildren
+  '/_app/app/cases/new': typeof AppAppCasesNewRoute
+  '/_app/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
+  '/_app/app/students/new': typeof AppAppStudentsNewRoute
+  '/_app/app/users/new': typeof AppAppUsersNewRoute
+  '/_app/app/biometric/': typeof AppAppBiometricIndexRoute
+  '/_app/app/cases/': typeof AppAppCasesIndexRoute
+  '/_app/app/students/': typeof AppAppStudentsIndexRoute
+  '/_app/app/users/': typeof AppAppUsersIndexRoute
+  '/_app/app/cases/$id/edit': typeof AppAppCasesIdEditRoute
+  '/_app/app/students/$id/edit': typeof AppAppStudentsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/app/audit'
+    | '/app/dashboard'
+    | '/app/reports'
+    | '/app/settings'
+    | '/app/biometric/enroll'
+    | '/app/cases/$id'
+    | '/app/cases/new'
+    | '/app/students/$id'
+    | '/app/students/new'
+    | '/app/users/new'
+    | '/app/biometric/'
+    | '/app/cases/'
+    | '/app/students/'
+    | '/app/users/'
+    | '/app/cases/$id/edit'
+    | '/app/students/$id/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/app/audit'
+    | '/app/dashboard'
+    | '/app/reports'
+    | '/app/settings'
+    | '/app/biometric/enroll'
+    | '/app/cases/$id'
+    | '/app/cases/new'
+    | '/app/students/$id'
+    | '/app/students/new'
+    | '/app/users/new'
+    | '/app/biometric'
+    | '/app/cases'
+    | '/app/students'
+    | '/app/users'
+    | '/app/cases/$id/edit'
+    | '/app/students/$id/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/app/audit'
+    | '/_app/app/dashboard'
+    | '/_app/app/reports'
+    | '/_app/app/settings'
+    | '/_app/app/biometric/enroll'
+    | '/_app/app/cases/$id'
+    | '/_app/app/cases/new'
+    | '/_app/app/students/$id'
+    | '/_app/app/students/new'
+    | '/_app/app/users/new'
+    | '/_app/app/biometric/'
+    | '/_app/app/cases/'
+    | '/_app/app/students/'
+    | '/_app/app/users/'
+    | '/_app/app/cases/$id/edit'
+    | '/_app/app/students/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +279,185 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/app/settings': {
+      id: '/_app/app/settings'
+      path: '/app/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppAppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/reports': {
+      id: '/_app/app/reports'
+      path: '/app/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AppAppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/dashboard': {
+      id: '/_app/app/dashboard'
+      path: '/app/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppAppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/audit': {
+      id: '/_app/app/audit'
+      path: '/app/audit'
+      fullPath: '/app/audit'
+      preLoaderRoute: typeof AppAppAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/users/': {
+      id: '/_app/app/users/'
+      path: '/app/users'
+      fullPath: '/app/users/'
+      preLoaderRoute: typeof AppAppUsersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/students/': {
+      id: '/_app/app/students/'
+      path: '/app/students'
+      fullPath: '/app/students/'
+      preLoaderRoute: typeof AppAppStudentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/cases/': {
+      id: '/_app/app/cases/'
+      path: '/app/cases'
+      fullPath: '/app/cases/'
+      preLoaderRoute: typeof AppAppCasesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/biometric/': {
+      id: '/_app/app/biometric/'
+      path: '/app/biometric'
+      fullPath: '/app/biometric/'
+      preLoaderRoute: typeof AppAppBiometricIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/users/new': {
+      id: '/_app/app/users/new'
+      path: '/app/users/new'
+      fullPath: '/app/users/new'
+      preLoaderRoute: typeof AppAppUsersNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/students/new': {
+      id: '/_app/app/students/new'
+      path: '/app/students/new'
+      fullPath: '/app/students/new'
+      preLoaderRoute: typeof AppAppStudentsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/students/$id': {
+      id: '/_app/app/students/$id'
+      path: '/app/students/$id'
+      fullPath: '/app/students/$id'
+      preLoaderRoute: typeof AppAppStudentsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/cases/new': {
+      id: '/_app/app/cases/new'
+      path: '/app/cases/new'
+      fullPath: '/app/cases/new'
+      preLoaderRoute: typeof AppAppCasesNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/cases/$id': {
+      id: '/_app/app/cases/$id'
+      path: '/app/cases/$id'
+      fullPath: '/app/cases/$id'
+      preLoaderRoute: typeof AppAppCasesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/biometric/enroll': {
+      id: '/_app/app/biometric/enroll'
+      path: '/app/biometric/enroll'
+      fullPath: '/app/biometric/enroll'
+      preLoaderRoute: typeof AppAppBiometricEnrollRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/students/$id/edit': {
+      id: '/_app/app/students/$id/edit'
+      path: '/edit'
+      fullPath: '/app/students/$id/edit'
+      preLoaderRoute: typeof AppAppStudentsIdEditRouteImport
+      parentRoute: typeof AppAppStudentsIdRoute
+    }
+    '/_app/app/cases/$id/edit': {
+      id: '/_app/app/cases/$id/edit'
+      path: '/edit'
+      fullPath: '/app/cases/$id/edit'
+      preLoaderRoute: typeof AppAppCasesIdEditRouteImport
+      parentRoute: typeof AppAppCasesIdRoute
+    }
   }
 }
 
+interface AppAppCasesIdRouteChildren {
+  AppAppCasesIdEditRoute: typeof AppAppCasesIdEditRoute
+}
+
+const AppAppCasesIdRouteChildren: AppAppCasesIdRouteChildren = {
+  AppAppCasesIdEditRoute: AppAppCasesIdEditRoute,
+}
+
+const AppAppCasesIdRouteWithChildren = AppAppCasesIdRoute._addFileChildren(
+  AppAppCasesIdRouteChildren,
+)
+
+interface AppAppStudentsIdRouteChildren {
+  AppAppStudentsIdEditRoute: typeof AppAppStudentsIdEditRoute
+}
+
+const AppAppStudentsIdRouteChildren: AppAppStudentsIdRouteChildren = {
+  AppAppStudentsIdEditRoute: AppAppStudentsIdEditRoute,
+}
+
+const AppAppStudentsIdRouteWithChildren =
+  AppAppStudentsIdRoute._addFileChildren(AppAppStudentsIdRouteChildren)
+
+interface AppRouteChildren {
+  AppAppAuditRoute: typeof AppAppAuditRoute
+  AppAppDashboardRoute: typeof AppAppDashboardRoute
+  AppAppReportsRoute: typeof AppAppReportsRoute
+  AppAppSettingsRoute: typeof AppAppSettingsRoute
+  AppAppBiometricEnrollRoute: typeof AppAppBiometricEnrollRoute
+  AppAppCasesIdRoute: typeof AppAppCasesIdRouteWithChildren
+  AppAppCasesNewRoute: typeof AppAppCasesNewRoute
+  AppAppStudentsIdRoute: typeof AppAppStudentsIdRouteWithChildren
+  AppAppStudentsNewRoute: typeof AppAppStudentsNewRoute
+  AppAppUsersNewRoute: typeof AppAppUsersNewRoute
+  AppAppBiometricIndexRoute: typeof AppAppBiometricIndexRoute
+  AppAppCasesIndexRoute: typeof AppAppCasesIndexRoute
+  AppAppStudentsIndexRoute: typeof AppAppStudentsIndexRoute
+  AppAppUsersIndexRoute: typeof AppAppUsersIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAppAuditRoute: AppAppAuditRoute,
+  AppAppDashboardRoute: AppAppDashboardRoute,
+  AppAppReportsRoute: AppAppReportsRoute,
+  AppAppSettingsRoute: AppAppSettingsRoute,
+  AppAppBiometricEnrollRoute: AppAppBiometricEnrollRoute,
+  AppAppCasesIdRoute: AppAppCasesIdRouteWithChildren,
+  AppAppCasesNewRoute: AppAppCasesNewRoute,
+  AppAppStudentsIdRoute: AppAppStudentsIdRouteWithChildren,
+  AppAppStudentsNewRoute: AppAppStudentsNewRoute,
+  AppAppUsersNewRoute: AppAppUsersNewRoute,
+  AppAppBiometricIndexRoute: AppAppBiometricIndexRoute,
+  AppAppCasesIndexRoute: AppAppCasesIndexRoute,
+  AppAppStudentsIndexRoute: AppAppStudentsIndexRoute,
+  AppAppUsersIndexRoute: AppAppUsersIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
