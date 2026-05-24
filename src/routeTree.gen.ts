@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppAppSettingsRouteImport } from './routes/_app.app.settings'
 import { Route as AppAppReportsRouteImport } from './routes/_app.app.reports'
 import { Route as AppAppDashboardRouteImport } from './routes/_app.app.dashboard'
 import { Route as AppAppAuditRouteImport } from './routes/_app.app.audit'
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAppSettingsRoute = AppAppSettingsRouteImport.update({
+  id: '/app/settings',
+  path: '/app/settings',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppAppReportsRoute = AppAppReportsRouteImport.update({
   id: '/app/reports',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/app/audit': typeof AppAppAuditRoute
   '/app/dashboard': typeof AppAppDashboardRoute
   '/app/reports': typeof AppAppReportsRoute
+  '/app/settings': typeof AppAppSettingsRoute
   '/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
   '/app/cases/$id': typeof AppAppCasesIdRouteWithChildren
   '/app/cases/new': typeof AppAppCasesNewRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/app/audit': typeof AppAppAuditRoute
   '/app/dashboard': typeof AppAppDashboardRoute
   '/app/reports': typeof AppAppReportsRoute
+  '/app/settings': typeof AppAppSettingsRoute
   '/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
   '/app/cases/$id': typeof AppAppCasesIdRouteWithChildren
   '/app/cases/new': typeof AppAppCasesNewRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/_app/app/audit': typeof AppAppAuditRoute
   '/_app/app/dashboard': typeof AppAppDashboardRoute
   '/_app/app/reports': typeof AppAppReportsRoute
+  '/_app/app/settings': typeof AppAppSettingsRoute
   '/_app/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
   '/_app/app/cases/$id': typeof AppAppCasesIdRouteWithChildren
   '/_app/app/cases/new': typeof AppAppCasesNewRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/dashboard'
     | '/app/reports'
+    | '/app/settings'
     | '/app/biometric/enroll'
     | '/app/cases/$id'
     | '/app/cases/new'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/dashboard'
     | '/app/reports'
+    | '/app/settings'
     | '/app/biometric/enroll'
     | '/app/cases/$id'
     | '/app/cases/new'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/_app/app/audit'
     | '/_app/app/dashboard'
     | '/_app/app/reports'
+    | '/_app/app/settings'
     | '/_app/app/biometric/enroll'
     | '/_app/app/cases/$id'
     | '/_app/app/cases/new'
@@ -266,6 +278,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/app/settings': {
+      id: '/_app/app/settings'
+      path: '/app/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppAppSettingsRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/app/reports': {
       id: '/_app/app/reports'
@@ -402,6 +421,7 @@ interface AppRouteChildren {
   AppAppAuditRoute: typeof AppAppAuditRoute
   AppAppDashboardRoute: typeof AppAppDashboardRoute
   AppAppReportsRoute: typeof AppAppReportsRoute
+  AppAppSettingsRoute: typeof AppAppSettingsRoute
   AppAppBiometricEnrollRoute: typeof AppAppBiometricEnrollRoute
   AppAppCasesIdRoute: typeof AppAppCasesIdRouteWithChildren
   AppAppCasesNewRoute: typeof AppAppCasesNewRoute
@@ -418,6 +438,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAppAuditRoute: AppAppAuditRoute,
   AppAppDashboardRoute: AppAppDashboardRoute,
   AppAppReportsRoute: AppAppReportsRoute,
+  AppAppSettingsRoute: AppAppSettingsRoute,
   AppAppBiometricEnrollRoute: AppAppBiometricEnrollRoute,
   AppAppCasesIdRoute: AppAppCasesIdRouteWithChildren,
   AppAppCasesNewRoute: AppAppCasesNewRoute,
