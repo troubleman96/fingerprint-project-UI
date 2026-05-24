@@ -31,17 +31,26 @@ function AppLayout() {
   const theme = useThemeStore((s) => s.theme);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    // Ensure zustand persist has rehydrated from localStorage before gating
+    const unsub = useAuthStore.persist?.onFinishHydration?.(() => setHydrated(true));
+    if (useAuthStore.persist?.hasHydrated?.()) setHydrated(true);
+    return () => { unsub?.(); };
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
   useEffect(() => {
-    if (!isAuth && typeof window !== "undefined") {
+    if (hydrated && !isAuth && typeof window !== "undefined") {
       window.location.href = "/login";
     }
-  }, [isAuth]);
+  }, [isAuth, hydrated]);
 
+  if (!hydrated) return null;
   if (!isAuth) return null;
 
   let title = titleMap[pathname] ?? "DisciplineTrack";
