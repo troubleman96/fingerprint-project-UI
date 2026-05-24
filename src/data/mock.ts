@@ -11,11 +11,11 @@ export const departments = [
 ];
 
 export const users: User[] = [
-  { id: 1, email: "admin@dit.ac.tz", full_name: "Amina Rashidi", role: "ADMIN", department: "IT Department", is_active: true, last_login: "2024-05-20T09:12:00Z", joined: "2022-01-10", phone: "+255 712 000 001" },
-  { id: 2, email: "officer@dit.ac.tz", full_name: "Khalfan Mwarami", role: "OFFICER", department: "Student Affairs", is_active: true, last_login: "2024-05-22T14:45:00Z", joined: "2022-03-15", phone: "+255 712 000 002" },
-  { id: 3, email: "staff@dit.ac.tz", full_name: "Zawadi Ally", role: "STAFF", department: "Registrar", is_active: true, last_login: "2024-05-23T08:01:00Z", joined: "2023-08-01", phone: "+255 712 000 003" },
-  { id: 4, email: "j.mhina@dit.ac.tz", full_name: "Juma Mhina", role: "OFFICER", department: "Student Affairs", is_active: true, last_login: "2024-05-21T11:00:00Z", joined: "2023-02-12" },
-  { id: 5, email: "r.kessy@dit.ac.tz", full_name: "Rehema Kessy", role: "STAFF", department: "Registrar", is_active: false, last_login: "2024-04-02T10:00:00Z", joined: "2022-11-09" },
+  { id: 1, email: "admin@email.com", full_name: "Amina Rashidi", role: "ADMIN", department: "IT Department", is_active: true, last_login: "2024-05-20T09:12:00Z", joined: "2022-01-10", phone: "+255 712 000 001" },
+  { id: 2, email: "officer@email.com", full_name: "Khalfan Mwarami", role: "OFFICER", department: "Student Affairs", is_active: true, last_login: "2024-05-22T14:45:00Z", joined: "2022-03-15", phone: "+255 712 000 002" },
+  { id: 3, email: "staff@email.com", full_name: "Zawadi Ally", role: "STAFF", department: "Registrar", is_active: true, last_login: "2024-05-23T08:01:00Z", joined: "2023-08-01", phone: "+255 712 000 003" },
+  { id: 4, email: "j.mhina@email.com", full_name: "Juma Mhina", role: "OFFICER", department: "Student Affairs", is_active: true, last_login: "2024-05-21T11:00:00Z", joined: "2023-02-12" },
+  { id: 5, email: "r.kessy@email.com", full_name: "Rehema Kessy", role: "STAFF", department: "Registrar", is_active: false, last_login: "2024-04-02T10:00:00Z", joined: "2022-11-09" },
 ];
 
 export const incidentTypes: IncidentType[] = [
@@ -46,7 +46,7 @@ export const students: Student[] = Array.from({ length: 12 }, (_, i) => ({
   created_at: `2024-0${(i % 9) + 1}-${10 + (i % 18)}`,
   gender: i % 2 === 0 ? "Female" : "Male",
   phone: `+255 75${i} 000 ${100 + i}`,
-  email: `${fnames[i].toLowerCase()}.${lnames[i].toLowerCase()}@student.dit.ac.tz`,
+  email: `${fnames[i].toLowerCase()}.${lnames[i].toLowerCase()}@email.com`,
 }));
 
 const statuses: any[] = ["REPORTED", "UNDER_REVIEW", "DECIDED", "CLOSED"];

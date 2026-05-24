@@ -29,9 +29,9 @@ The app is designed for institutions that need to:
 
 These users exist in the seeded mock dataset:
 
-- `admin@dit.ac.tz`
-- `officer@dit.ac.tz`
-- `staff@dit.ac.tz`
+- `admin@email.com`
+- `officer@email.com`
+- `staff@email.com`
 
 The current login function only checks whether the email exists in the mock user list. The password is not validated against a real authentication service.
 
@@ -189,4 +189,3 @@ npm run format
 ## Extra Documentation
 
 - [Architecture Guide](docs/ARCHITECTURE.md)
-

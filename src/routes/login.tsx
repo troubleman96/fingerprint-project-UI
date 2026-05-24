@@ -17,7 +17,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const { theme, toggleTheme } = useThemeStore();
-  const [email, setEmail] = useState("admin@dit.ac.tz");
+  const [email, setEmail] = useState("admin@email.com");
   const [password, setPassword] = useState("password");
   const [show, setShow] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
@@ -30,7 +30,7 @@ function LoginPage() {
       toast.success("Welcome back!");
       navigate({ to: "/app/dashboard" });
     } else {
-      setErr("Invalid credentials. Try admin@dit.ac.tz or officer@dit.ac.tz");
+      setErr("Invalid credentials. Try admin@email.com or officer@email.com");
     }
   };
 
@@ -94,7 +94,7 @@ function LoginPage() {
             <BiometricSimulator forceSuccess onResult={(ok) => {
               if (ok) {
                 setTimeout(() => {
-                  login("admin@dit.ac.tz", "x");
+                  login("admin@email.com", "x");
                   setBioOpen(false);
                   navigate({ to: "/app/dashboard" });
                 }, 600);
