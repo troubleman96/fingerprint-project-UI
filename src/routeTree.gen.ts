@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAppDashboardRouteImport } from './routes/_app.app.dashboard'
 import { Route as AppAppStudentsIndexRouteImport } from './routes/_app.app.students.index'
+import { Route as AppAppCasesIndexRouteImport } from './routes/_app.app.cases.index'
 import { Route as AppAppStudentsNewRouteImport } from './routes/_app.app.students.new'
 import { Route as AppAppStudentsIdRouteImport } from './routes/_app.app.students.$id'
 import { Route as AppAppStudentsIdEditRouteImport } from './routes/_app.app.students.$id.edit'
@@ -42,6 +43,11 @@ const AppAppStudentsIndexRoute = AppAppStudentsIndexRouteImport.update({
   path: '/app/students/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppCasesIndexRoute = AppAppCasesIndexRouteImport.update({
+  id: '/app/cases/',
+  path: '/app/cases/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppStudentsNewRoute = AppAppStudentsNewRouteImport.update({
   id: '/app/students/new',
   path: '/app/students/new',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/app/dashboard': typeof AppAppDashboardRoute
   '/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/app/students/new': typeof AppAppStudentsNewRoute
+  '/app/cases/': typeof AppAppCasesIndexRoute
   '/app/students/': typeof AppAppStudentsIndexRoute
   '/app/students/$id/edit': typeof AppAppStudentsIdEditRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/app/dashboard': typeof AppAppDashboardRoute
   '/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/app/students/new': typeof AppAppStudentsNewRoute
+  '/app/cases': typeof AppAppCasesIndexRoute
   '/app/students': typeof AppAppStudentsIndexRoute
   '/app/students/$id/edit': typeof AppAppStudentsIdEditRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/_app/app/dashboard': typeof AppAppDashboardRoute
   '/_app/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/_app/app/students/new': typeof AppAppStudentsNewRoute
+  '/_app/app/cases/': typeof AppAppCasesIndexRoute
   '/_app/app/students/': typeof AppAppStudentsIndexRoute
   '/_app/app/students/$id/edit': typeof AppAppStudentsIdEditRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/students/$id'
     | '/app/students/new'
+    | '/app/cases/'
     | '/app/students/'
     | '/app/students/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/students/$id'
     | '/app/students/new'
+    | '/app/cases'
     | '/app/students'
     | '/app/students/$id/edit'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/_app/app/dashboard'
     | '/_app/app/students/$id'
     | '/_app/app/students/new'
+    | '/_app/app/cases/'
     | '/_app/app/students/'
     | '/_app/app/students/$id/edit'
   fileRoutesById: FileRoutesById
@@ -161,6 +173,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppStudentsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/cases/': {
+      id: '/_app/app/cases/'
+      path: '/app/cases'
+      fullPath: '/app/cases/'
+      preLoaderRoute: typeof AppAppCasesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/app/students/new': {
       id: '/_app/app/students/new'
       path: '/app/students/new'
@@ -200,6 +219,7 @@ interface AppRouteChildren {
   AppAppDashboardRoute: typeof AppAppDashboardRoute
   AppAppStudentsIdRoute: typeof AppAppStudentsIdRouteWithChildren
   AppAppStudentsNewRoute: typeof AppAppStudentsNewRoute
+  AppAppCasesIndexRoute: typeof AppAppCasesIndexRoute
   AppAppStudentsIndexRoute: typeof AppAppStudentsIndexRoute
 }
 
@@ -207,6 +227,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAppDashboardRoute: AppAppDashboardRoute,
   AppAppStudentsIdRoute: AppAppStudentsIdRouteWithChildren,
   AppAppStudentsNewRoute: AppAppStudentsNewRoute,
+  AppAppCasesIndexRoute: AppAppCasesIndexRoute,
   AppAppStudentsIndexRoute: AppAppStudentsIndexRoute,
 }
 
