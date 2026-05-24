@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAppDashboardRouteImport } from './routes/_app.app.dashboard'
+import { Route as AppAppStudentsIndexRouteImport } from './routes/_app.app.students.index'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -33,16 +34,23 @@ const AppAppDashboardRoute = AppAppDashboardRouteImport.update({
   path: '/app/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppStudentsIndexRoute = AppAppStudentsIndexRouteImport.update({
+  id: '/app/students/',
+  path: '/app/students/',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/students/': typeof AppAppStudentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/students': typeof AppAppStudentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,13 +58,20 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/app/dashboard': typeof AppAppDashboardRoute
+  '/_app/app/students/': typeof AppAppStudentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/app/dashboard'
+  fullPaths: '/' | '/login' | '/app/dashboard' | '/app/students/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/app/dashboard'
-  id: '__root__' | '/' | '/_app' | '/login' | '/_app/app/dashboard'
+  to: '/' | '/login' | '/app/dashboard' | '/app/students'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/app/dashboard'
+    | '/_app/app/students/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,15 +110,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/students/': {
+      id: '/_app/app/students/'
+      path: '/app/students'
+      fullPath: '/app/students/'
+      preLoaderRoute: typeof AppAppStudentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppAppDashboardRoute: typeof AppAppDashboardRoute
+  AppAppStudentsIndexRoute: typeof AppAppStudentsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAppDashboardRoute: AppAppDashboardRoute,
+  AppAppStudentsIndexRoute: AppAppStudentsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -116,3 +140,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
