@@ -18,6 +18,7 @@ import { Route as AppAppCasesIndexRouteImport } from './routes/_app.app.cases.in
 import { Route as AppAppStudentsNewRouteImport } from './routes/_app.app.students.new'
 import { Route as AppAppStudentsIdRouteImport } from './routes/_app.app.students.$id'
 import { Route as AppAppCasesNewRouteImport } from './routes/_app.app.cases.new'
+import { Route as AppAppCasesIdRouteImport } from './routes/_app.app.cases.$id'
 import { Route as AppAppStudentsIdEditRouteImport } from './routes/_app.app.students.$id.edit'
 
 const LoginRoute = LoginRouteImport.update({
@@ -64,6 +65,11 @@ const AppAppCasesNewRoute = AppAppCasesNewRouteImport.update({
   path: '/app/cases/new',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppCasesIdRoute = AppAppCasesIdRouteImport.update({
+  id: '/app/cases/$id',
+  path: '/app/cases/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppStudentsIdEditRoute = AppAppStudentsIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/cases/$id': typeof AppAppCasesIdRoute
   '/app/cases/new': typeof AppAppCasesNewRoute
   '/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/app/students/new': typeof AppAppStudentsNewRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/cases/$id': typeof AppAppCasesIdRoute
   '/app/cases/new': typeof AppAppCasesNewRoute
   '/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/app/students/new': typeof AppAppStudentsNewRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/app/dashboard': typeof AppAppDashboardRoute
+  '/_app/app/cases/$id': typeof AppAppCasesIdRoute
   '/_app/app/cases/new': typeof AppAppCasesNewRoute
   '/_app/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/_app/app/students/new': typeof AppAppStudentsNewRoute
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/app/dashboard'
+    | '/app/cases/$id'
     | '/app/cases/new'
     | '/app/students/$id'
     | '/app/students/new'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/app/dashboard'
+    | '/app/cases/$id'
     | '/app/cases/new'
     | '/app/students/$id'
     | '/app/students/new'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/app/dashboard'
+    | '/_app/app/cases/$id'
     | '/_app/app/cases/new'
     | '/_app/app/students/$id'
     | '/_app/app/students/new'
@@ -213,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppCasesNewRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/cases/$id': {
+      id: '/_app/app/cases/$id'
+      path: '/app/cases/$id'
+      fullPath: '/app/cases/$id'
+      preLoaderRoute: typeof AppAppCasesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/app/students/$id/edit': {
       id: '/_app/app/students/$id/edit'
       path: '/edit'
@@ -236,6 +255,7 @@ const AppAppStudentsIdRouteWithChildren =
 
 interface AppRouteChildren {
   AppAppDashboardRoute: typeof AppAppDashboardRoute
+  AppAppCasesIdRoute: typeof AppAppCasesIdRoute
   AppAppCasesNewRoute: typeof AppAppCasesNewRoute
   AppAppStudentsIdRoute: typeof AppAppStudentsIdRouteWithChildren
   AppAppStudentsNewRoute: typeof AppAppStudentsNewRoute
@@ -245,6 +265,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAppDashboardRoute: AppAppDashboardRoute,
+  AppAppCasesIdRoute: AppAppCasesIdRoute,
   AppAppCasesNewRoute: AppAppCasesNewRoute,
   AppAppStudentsIdRoute: AppAppStudentsIdRouteWithChildren,
   AppAppStudentsNewRoute: AppAppStudentsNewRoute,
