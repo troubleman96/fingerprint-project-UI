@@ -19,6 +19,7 @@ import { Route as AppAppUsersIndexRouteImport } from './routes/_app.app.users.in
 import { Route as AppAppStudentsIndexRouteImport } from './routes/_app.app.students.index'
 import { Route as AppAppCasesIndexRouteImport } from './routes/_app.app.cases.index'
 import { Route as AppAppBiometricIndexRouteImport } from './routes/_app.app.biometric.index'
+import { Route as AppAppUsersNewRouteImport } from './routes/_app.app.users.new'
 import { Route as AppAppStudentsNewRouteImport } from './routes/_app.app.students.new'
 import { Route as AppAppStudentsIdRouteImport } from './routes/_app.app.students.$id'
 import { Route as AppAppCasesNewRouteImport } from './routes/_app.app.cases.new'
@@ -76,6 +77,11 @@ const AppAppBiometricIndexRoute = AppAppBiometricIndexRouteImport.update({
   path: '/app/biometric/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppUsersNewRoute = AppAppUsersNewRouteImport.update({
+  id: '/app/users/new',
+  path: '/app/users/new',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppStudentsNewRoute = AppAppStudentsNewRouteImport.update({
   id: '/app/students/new',
   path: '/app/students/new',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/app/cases/new': typeof AppAppCasesNewRoute
   '/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/app/students/new': typeof AppAppStudentsNewRoute
+  '/app/users/new': typeof AppAppUsersNewRoute
   '/app/biometric/': typeof AppAppBiometricIndexRoute
   '/app/cases/': typeof AppAppCasesIndexRoute
   '/app/students/': typeof AppAppStudentsIndexRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/app/cases/new': typeof AppAppCasesNewRoute
   '/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/app/students/new': typeof AppAppStudentsNewRoute
+  '/app/users/new': typeof AppAppUsersNewRoute
   '/app/biometric': typeof AppAppBiometricIndexRoute
   '/app/cases': typeof AppAppCasesIndexRoute
   '/app/students': typeof AppAppStudentsIndexRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/_app/app/cases/new': typeof AppAppCasesNewRoute
   '/_app/app/students/$id': typeof AppAppStudentsIdRouteWithChildren
   '/_app/app/students/new': typeof AppAppStudentsNewRoute
+  '/_app/app/users/new': typeof AppAppUsersNewRoute
   '/_app/app/biometric/': typeof AppAppBiometricIndexRoute
   '/_app/app/cases/': typeof AppAppCasesIndexRoute
   '/_app/app/students/': typeof AppAppStudentsIndexRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/app/cases/new'
     | '/app/students/$id'
     | '/app/students/new'
+    | '/app/users/new'
     | '/app/biometric/'
     | '/app/cases/'
     | '/app/students/'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/app/cases/new'
     | '/app/students/$id'
     | '/app/students/new'
+    | '/app/users/new'
     | '/app/biometric'
     | '/app/cases'
     | '/app/students'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/_app/app/cases/new'
     | '/_app/app/students/$id'
     | '/_app/app/students/new'
+    | '/_app/app/users/new'
     | '/_app/app/biometric/'
     | '/_app/app/cases/'
     | '/_app/app/students/'
@@ -304,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppBiometricIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/users/new': {
+      id: '/_app/app/users/new'
+      path: '/app/users/new'
+      fullPath: '/app/users/new'
+      preLoaderRoute: typeof AppAppUsersNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/app/students/new': {
       id: '/_app/app/students/new'
       path: '/app/students/new'
@@ -388,6 +407,7 @@ interface AppRouteChildren {
   AppAppCasesNewRoute: typeof AppAppCasesNewRoute
   AppAppStudentsIdRoute: typeof AppAppStudentsIdRouteWithChildren
   AppAppStudentsNewRoute: typeof AppAppStudentsNewRoute
+  AppAppUsersNewRoute: typeof AppAppUsersNewRoute
   AppAppBiometricIndexRoute: typeof AppAppBiometricIndexRoute
   AppAppCasesIndexRoute: typeof AppAppCasesIndexRoute
   AppAppStudentsIndexRoute: typeof AppAppStudentsIndexRoute
@@ -403,6 +423,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAppCasesNewRoute: AppAppCasesNewRoute,
   AppAppStudentsIdRoute: AppAppStudentsIdRouteWithChildren,
   AppAppStudentsNewRoute: AppAppStudentsNewRoute,
+  AppAppUsersNewRoute: AppAppUsersNewRoute,
   AppAppBiometricIndexRoute: AppAppBiometricIndexRoute,
   AppAppCasesIndexRoute: AppAppCasesIndexRoute,
   AppAppStudentsIndexRoute: AppAppStudentsIndexRoute,
