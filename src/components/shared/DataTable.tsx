@@ -27,6 +27,7 @@ export function DataTable<T extends { id: number | string }>({
     if (!q) return data;
     const lower = q.toLowerCase();
     return data.filter((row) => {
+      // Default to searching all top-level row keys unless the caller narrows the scope.
       const keys = searchKeys ?? (Object.keys(row as any) as (keyof T)[]);
       return keys.some((k) => String((row as any)[k] ?? "").toLowerCase().includes(lower));
     });
@@ -35,6 +36,8 @@ export function DataTable<T extends { id: number | string }>({
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
     const col = columns.find((c) => c.key === sortKey);
+    // Sorting prefers an explicit accessor so callers can sort by derived values
+    // instead of the rendered cell contents.
     const acc = col?.accessor ?? ((r: T) => (r as any)[sortKey]);
     return [...filtered].sort((a, b) => {
       const av = acc(a); const bv = acc(b);

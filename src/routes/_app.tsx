@@ -34,7 +34,8 @@ function AppLayout() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    // Ensure zustand persist has rehydrated from localStorage before gating
+    // Delay auth gating until persisted Zustand state is restored from localStorage.
+    // Without this, a valid returning session briefly looks unauthenticated on boot.
     const unsub = useAuthStore.persist?.onFinishHydration?.(() => setHydrated(true));
     if (useAuthStore.persist?.hasHydrated?.()) setHydrated(true);
     return () => { unsub?.(); };
@@ -45,6 +46,8 @@ function AppLayout() {
   }, [theme]);
 
   useEffect(() => {
+    // Route protection currently lives on the client. Once a real backend exists,
+    // this should be complemented with server-side authorization as well.
     if (hydrated && !isAuth && typeof window !== "undefined") {
       window.location.href = "/login";
     }
@@ -54,6 +57,7 @@ function AppLayout() {
   if (!isAuth) return null;
 
   let title = titleMap[pathname] ?? "DisciplineTrack";
+  // Detail pages are dynamic, so derive the topbar title from the path prefix.
   if (pathname.startsWith("/app/students/") && pathname !== "/app/students/new") title = "Student Profile";
   if (pathname.startsWith("/app/cases/") && pathname !== "/app/cases/new") title = "Case Details";
 

@@ -50,6 +50,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
 
         <p className="px-3 pt-5 pb-2 text-[10px] font-semibold uppercase tracking-wider opacity-50">System</p>
+        {/* Navigation visibility is filtered in the UI by the logged-in mock role. */}
         {system.filter((it) => !user || it.roles.includes(user.role)).map((it) => {
           const Icon = it.icon;
           const active = isActive(it.to);

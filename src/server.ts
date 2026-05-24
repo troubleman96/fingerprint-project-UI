@@ -11,6 +11,8 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
+    // TanStack Start provides the actual SSR/server handler. We lazy-load and memoize
+    // it so repeated requests do not keep re-importing the entry module.
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
       (m) => ((m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry)),
     );
@@ -25,6 +27,8 @@ function brandedErrorResponse(): Response {
   });
 }
 
+// Some SSR failures are converted upstream into a generic JSON 500 response.
+// Detect that specific payload shape so we can restore the intended branded error page.
 function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boolean {
   let payload: unknown;
   try {

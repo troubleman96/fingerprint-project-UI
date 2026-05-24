@@ -18,6 +18,8 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       login: (email) => {
+        // Demo-only auth: existence of the email in mock users is treated as success.
+        // Replace this with a real auth API before relying on it for production access.
         const u = users.find((x) => x.email.toLowerCase() === email.toLowerCase());
         if (!u) return false;
         set({ user: { id: u.id, email: u.email, full_name: u.full_name, role: u.role, department: u.department }, isAuthenticated: true });

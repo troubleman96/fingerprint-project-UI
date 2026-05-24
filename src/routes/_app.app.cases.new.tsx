@@ -29,6 +29,8 @@ function CaseCreatePage() {
   const [files, setFiles] = useState<{ name: string; size: number }[]>([]);
 
   const findStudent = () => {
+    // Demo behavior: partial reg-number match, with a fallback record so the wizard
+    // always remains explorable during product demos.
     const s = students.find((x) => x.reg_number.includes(reg.trim())) || students[0];
     setStudent(s);
   };
@@ -59,6 +61,7 @@ function CaseCreatePage() {
         {step === 1 && (
           <div className="space-y-4">
             <h3 className="font-semibold">Identify Student</h3>
+            {/* The wizard supports two lookup styles: manual search or biometric prefill. */}
             <RadioGroup value={method} onValueChange={setMethod} className="grid gap-3 md:grid-cols-2">
               <label className={`cursor-pointer rounded-lg border p-4 ${method === "reg" ? "border-blue-600" : "border-border"}`}>
                 <RadioGroupItem value="reg" className="sr-only" />

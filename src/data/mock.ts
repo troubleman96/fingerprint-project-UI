@@ -1,5 +1,7 @@
 import type { Student, DisciplinaryCase, User, AuditEntry, IncidentType } from "@/types";
 
+// Central demo dataset for the whole product. Most routes read directly from these
+// arrays today, so changing values here immediately changes the visible app state.
 export const departments = [
   "Computer Studies",
   "Business Administration",
@@ -28,6 +30,8 @@ export const incidentTypes: IncidentType[] = [
 const fnames = ["Asha", "Baraka", "Chausiku", "Daudi", "Eliya", "Fatuma", "Gemma", "Hamisi", "Imani", "Juma", "Kito", "Lulu"];
 const lnames = ["Mwakajinga", "Nkomo", "Ochieng", "Patel", "Qassim", "Rashid", "Sanga", "Tarimo", "Ulimwengu", "Vumi", "Wanjala", "Yusuf"];
 
+// Seed a compact student dataset with enough variation to exercise list filters,
+// detail pages, biometric status badges, and repeat-offender reporting.
 export const students: Student[] = Array.from({ length: 12 }, (_, i) => ({
   id: i + 1,
   reg_number: `2202${String(29358370 + i).padStart(8, "0")}`,
@@ -49,6 +53,8 @@ const statuses: any[] = ["REPORTED", "UNDER_REVIEW", "DECIDED", "CLOSED"];
 const severities: any[] = ["LOW", "MEDIUM", "HIGH"];
 const outcomes: any[] = ["WARNING", "SUSPENSION", "EXPULSION", "CLEARED", "REFERRED"];
 
+// Cases are generated from students and incident types so dashboard, reports, and
+// detail routes all stay internally consistent without hand-maintaining each record.
 export const cases: DisciplinaryCase[] = Array.from({ length: 15 }, (_, i) => {
   const status = statuses[i % statuses.length];
   return {
