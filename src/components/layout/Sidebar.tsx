@@ -9,12 +9,13 @@ const main = [
   { to: "/app/reports", label: "Reports", icon: BarChart3 },
 ] as const;
 
-const system = [
+import type { Role } from "@/types";
+const system: { to: string; label: string; icon: any; roles: Role[]; dot?: boolean }[] = [
   { to: "/app/biometric", label: "Biometric Auth", icon: Fingerprint, roles: ["ADMIN", "OFFICER", "STAFF"] },
   { to: "/app/audit", label: "Audit Log", icon: ScrollText, roles: ["ADMIN", "OFFICER"], dot: true },
   { to: "/app/users", label: "User Admin", icon: UserCog, roles: ["ADMIN"] },
   { to: "/app/settings", label: "Settings", icon: Settings, roles: ["ADMIN", "OFFICER", "STAFF"] },
-] as const;
+];
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const user = useAuthStore((s) => s.user);
