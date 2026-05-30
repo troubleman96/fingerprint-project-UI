@@ -122,7 +122,15 @@ export async function apiFetch<T = unknown>(
     );
   }
 
-  return json as ApiResponse<T>;
+  // Paginated list endpoints (via StandardResultsPagination) return
+  // { success, data: [...], meta: {...} }.
+  // Single-object endpoints (ModelViewSet retrieve/create/update) return
+  // the raw serialized object with no envelope.
+  // Normalise both so every caller can safely read res.data.
+  if ("success" in json) {
+    return json as ApiResponse<T>;
+  }
+  return { success: true, data: json as T, message: "" } as ApiResponse<T>;
 }
 
 export function buildQuery(params: Record<string, unknown>): string {

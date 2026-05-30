@@ -36,10 +36,10 @@ function StudentCreatePage() {
 
   const create = useMutation({
     mutationFn: (payload: FormData) => studentsApi.create(payload),
-    onSuccess: (student) => {
+    onSuccess: () => {
       toast.success("Student registered successfully");
       queryClient.invalidateQueries({ queryKey: ["students"] });
-      navigate({ to: "/app/students/$id", params: { id: student.id } });
+      navigate({ to: "/app/students" });
     },
     onError: (e: ApiError) => toast.error(e.message),
   });
