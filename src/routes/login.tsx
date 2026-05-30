@@ -17,20 +17,27 @@ function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const { theme, toggleTheme } = useThemeStore();
-  const [email, setEmail] = useState("admin@email.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [bioOpen, setBioOpen] = useState(false);
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr("");
-    if (login(email, password)) {
-      toast.success("Welcome back!");
-      navigate({ to: "/app/dashboard" });
-    } else {
-      setErr("Invalid credentials. Try admin@email.com or officer@email.com");
+    setLoading(true);
+    try {
+      const ok = await login(email, password);
+      if (ok) {
+        toast.success("Welcome back!");
+        navigate({ to: "/app/dashboard" });
+      } else {
+        setErr("Invalid email or password.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,7 +57,7 @@ function LoginPage() {
             ))}
           </ul>
         </div>
-        <p className="text-sm text-white/60">Demo environment</p>
+        <p className="text-sm text-white/60">© DisciplineTrack</p>
       </div>
       <div className="relative flex flex-1 items-center justify-center p-6">
         <Button variant="ghost" size="icon" className="absolute right-4 top-4" onClick={toggleTheme}>
@@ -59,21 +66,21 @@ function LoginPage() {
         <form onSubmit={submit} className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-8 shadow-sm">
           <div>
             <h2 className="text-2xl font-bold">Sign in to DisciplineTrack</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Enter your credentials or use biometric authentication.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Enter your institutional credentials.</p>
           </div>
           {err && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">{err}</div>}
           <div className="space-y-2">
             <Label>Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="pl-9" required />
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="pl-9" required autoComplete="email" />
             </div>
           </div>
           <div className="space-y-2">
             <Label>Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={password} onChange={(e) => setPassword(e.target.value)} type={show ? "text" : "password"} className="pl-9 pr-9" required />
+              <Input value={password} onChange={(e) => setPassword(e.target.value)} type={show ? "text" : "password"} className="pl-9 pr-9" required autoComplete="current-password" />
               <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                 {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -82,7 +89,9 @@ function LoginPage() {
           <div className="flex items-center gap-2 text-sm">
             <Checkbox id="rm" /><label htmlFor="rm">Remember me</label>
           </div>
-          <Button type="submit" className="w-full">Sign In</Button>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Signing in…" : "Sign In"}
+          </Button>
           <div className="flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" /></div>
           <Button type="button" variant="outline" className="w-full gap-2" onClick={() => setBioOpen(true)}>
             <Fingerprint className="h-4 w-4" /> Use Fingerprint Scanner
@@ -93,13 +102,10 @@ function LoginPage() {
             <DialogTitle>Biometric Login</DialogTitle>
             <BiometricSimulator forceSuccess onResult={(ok) => {
               if (ok) {
-                setTimeout(() => {
-                  login("admin@email.com", "x");
-                  setBioOpen(false);
-                  navigate({ to: "/app/dashboard" });
-                }, 600);
+                setBioOpen(false);
+                toast.info("Biometric login requires a hardware scanner connected to this workstation.");
               }
-            }} label="Welcome back" />
+            }} label="Scan fingerprint" />
           </DialogContent>
         </Dialog>
       </div>

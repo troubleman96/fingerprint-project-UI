@@ -32,7 +32,7 @@ function SettingsPage() {
             <h3 className="font-semibold">Profile</h3>
             <div><Label>Full Name</Label><Input defaultValue={user?.full_name} /></div>
             <div><Label>Email</Label><Input defaultValue={user?.email} /></div>
-            <div><Label>Department</Label><Input defaultValue={user?.department} /></div>
+            <div><Label>Department</Label><Input defaultValue={user?.department ?? ""} /></div>
             <Button onClick={() => toast.success("Profile saved")} className="w-fit">Save Changes</Button>
           </div>
           <div className="grid max-w-xl gap-4 rounded-xl border border-border bg-card p-6">

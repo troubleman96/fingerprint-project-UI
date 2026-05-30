@@ -1,32 +1,71 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Role } from "@/types";
-import { users } from "@/data/mock";
 
-interface AuthUser { id: number; email: string; full_name: string; role: Role; department: string; }
+export interface AuthUser {
+  id: number;
+  email: string;
+  full_name: string;
+  role: Role;
+  department: string | null;
+}
 
 interface AuthState {
   user: AuthUser | null;
+  access: string | null;
+  refresh: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  setTokens: (access: string, refresh: string) => void;
 }
+
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : "/api";
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      access: null,
+      refresh: null,
       isAuthenticated: false,
-      login: (email) => {
-        // Demo-only auth: existence of the email in mock users is treated as success.
-        // Replace this with a real auth API before relying on it for production access.
-        const u = users.find((x) => x.email.toLowerCase() === email.toLowerCase());
-        if (!u) return false;
-        set({ user: { id: u.id, email: u.email, full_name: u.full_name, role: u.role, department: u.department }, isAuthenticated: true });
-        return true;
+
+      login: async (email, password) => {
+        try {
+          const res = await fetch(`${API_BASE}/auth/login/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          if (!res.ok) return false;
+          const body = await res.json();
+          if (!body.success) return false;
+          const { access, refresh, user } = body.data;
+          set({
+            access,
+            refresh,
+            user: {
+              id: user.id,
+              email: user.email,
+              full_name: user.full_name,
+              role: user.role,
+              department: user.department ?? null,
+            },
+            isAuthenticated: true,
+          });
+          return true;
+        } catch {
+          return false;
+        }
       },
-      logout: () => set({ user: null, isAuthenticated: false }),
+
+      logout: () =>
+        set({ user: null, access: null, refresh: null, isAuthenticated: false }),
+
+      setTokens: (access, refresh) => set({ access, refresh }),
     }),
-    { name: "dt-auth" }
-  )
+    { name: "dt-auth" },
+  ),
 );

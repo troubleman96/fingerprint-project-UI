@@ -1,43 +1,88 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Users, FolderOpen, AlertTriangle, CheckCircle2, Search, FileText, BarChart3, Fingerprint } from "lucide-react";
 import { StatCard } from "@/components/shared/StatCard";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { Avatar } from "@/components/shared/Avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, LabelList } from "recharts";
-import { cases, students, dashboardStats } from "@/data/mock";
+import { reportsApi } from "@/api/reports";
+import { casesApi } from "@/api/cases";
+import { auditApi } from "@/api/audit";
+import type { CaseListItem } from "@/types";
 import { format, parseISO } from "date-fns";
 
 export const Route = createFileRoute("/_app/app/dashboard")({ component: DashboardPage });
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const recent = cases.slice(0, 8).map((c) => ({ ...c, student: students.find((s) => s.id === c.student_id)! }));
-  type Row = typeof recent[number];
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: reportsApi.dashboard,
+    staleTime: 60_000,
+  });
+
+  const { data: casesRes, isLoading: casesLoading } = useQuery({
+    queryKey: ["cases", { page_size: 8, ordering: "-created_at" }],
+    queryFn: () => casesApi.list({ page_size: 8, ordering: "-created_at" }),
+    staleTime: 30_000,
+  });
+
+  const { data: auditRes } = useQuery({
+    queryKey: ["audit", { page_size: 5 }],
+    queryFn: () => auditApi.list({ page_size: 5 }),
+    staleTime: 30_000,
+  });
+
+  const recent = casesRes?.data ?? [];
+  type Row = CaseListItem;
 
   const cols: Column<Row>[] = [
-    { key: "student", header: "Student", render: (r) => (
-      <div className="flex items-center gap-3"><Avatar name={`${r.student.first_name} ${r.student.last_name}`} />
-        <div><p className="text-sm font-medium">{r.student.first_name} {r.student.last_name}</p>
-        <p className="text-xs text-muted-foreground font-mono">{r.student.reg_number}</p></div></div>
-    )},
+    {
+      key: "student",
+      header: "Student",
+      render: (r) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={r.student.full_name} />
+          <div>
+            <p className="text-sm font-medium">{r.student.full_name}</p>
+            <p className="text-xs text-muted-foreground font-mono">{r.student.reg_number}</p>
+          </div>
+        </div>
+      ),
+    },
     { key: "case_number", header: "Case ID", render: (r) => <span className="font-mono text-sm text-blue-600 dark:text-blue-400">#{r.case_number}</span> },
-    { key: "incident_type", header: "Incident" },
+    { key: "incident_type_name", header: "Incident" },
     { key: "severity", header: "Severity", render: (r) => <SeverityBadge severity={r.severity} /> },
     { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} /> },
     { key: "date_of_incident", header: "Date", render: (r) => format(parseISO(r.date_of_incident), "dd MMM yyyy") },
   ];
 
+  if (statsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+        </div>
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  const hl = stats?.headline;
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard color="blue" label="Total Students" value={dashboardStats.total_students.toLocaleString()} delta="+142 enrolled, Sem 1" deltaColor="green" icon={<Users className="h-5 w-5" />} />
-        <StatCard color="amber" label="Open Cases" value={dashboardStats.open_cases} delta="+7 since last week" deltaColor="red" icon={<FolderOpen className="h-5 w-5" />} />
-        <StatCard color="red" label="Critical / Escalated" value={dashboardStats.critical_cases} delta="Requires immediate action" deltaColor="red" icon={<AlertTriangle className="h-5 w-5" />} />
-        <StatCard color="green" label="Resolved This Month" value={dashboardStats.resolved_this_month} delta="↑ 18% vs last month" deltaColor="green" icon={<CheckCircle2 className="h-5 w-5" />} />
+        <StatCard color="blue" label="Total Students" value={(hl?.total_students ?? 0).toLocaleString()} icon={<Users className="h-5 w-5" />} />
+        <StatCard color="amber" label="Open Cases" value={hl?.open_cases ?? 0} delta={`+${hl?.new_this_week ?? 0} this week`} deltaColor="red" icon={<FolderOpen className="h-5 w-5" />} />
+        <StatCard color="red" label="Critical Cases" value={hl?.critical_cases ?? 0} delta="Requires attention" deltaColor="red" icon={<AlertTriangle className="h-5 w-5" />} />
+        <StatCard color="green" label="Resolved This Month" value={hl?.resolved_this_month ?? 0} icon={<CheckCircle2 className="h-5 w-5" />} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -50,11 +95,12 @@ function DashboardPage() {
             <TabsList>
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="open">Open</TabsTrigger>
-              <TabsTrigger value="review">Under Review</TabsTrigger>
-              <TabsTrigger value="resolved">Resolved</TabsTrigger>
             </TabsList>
           </Tabs>
-          <DataTable data={recent} columns={cols} searchable={false} pageSize={8} onRowClick={(r) => navigate({ to: "/app/cases/$id", params: { id: String(r.id) } })} />
+          {casesLoading
+            ? <Skeleton className="h-40 w-full" />
+            : <DataTable data={recent} columns={cols} searchable={false} pageSize={8} onRowClick={(r) => navigate({ to: "/app/cases/$id", params: { id: r.id } })} />
+          }
         </div>
 
         <div className="space-y-4">
@@ -62,7 +108,7 @@ function DashboardPage() {
             <h3 className="mb-3 text-sm font-semibold">Cases This Semester</h3>
             <div className="h-32">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dashboardStats.monthly_trend}>
+                <BarChart data={stats?.monthly_trend ?? []}>
                   <XAxis dataKey="month" axisLine={false} tickLine={false} fontSize={11} />
                   <Tooltip />
                   <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="oklch(0.55 0.22 264)">
@@ -79,16 +125,13 @@ function DashboardPage() {
               <Link to="/app/audit" className="text-xs text-blue-600 hover:underline">Audit log →</Link>
             </div>
             <ul className="space-y-3 text-sm">
-              {[
-                { c: "bg-red-500", t: "Case Officer", a: "escalated case #CASE-2024-0441", w: "2 min ago" },
-                { c: "bg-emerald-500", t: "Admin User", a: "resolved case #CASE-2024-0438", w: "1 hr ago" },
-                { c: "bg-blue-500", t: "Registry Staff", a: "enrolled biometric for student", w: "3 hr ago" },
-                { c: "bg-amber-500", t: "Review Officer", a: "filed new case #CASE-2024-0442", w: "5 hr ago" },
-                { c: "bg-violet-500", t: "System", a: "exported monthly report", w: "yesterday" },
-              ].map((x, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${x.c}`} />
-                  <div className="flex-1"><p><span className="font-semibold">{x.t}</span> {x.a}</p><p className="text-xs text-muted-foreground">{x.w}</p></div>
+              {(auditRes?.data ?? []).map((entry, i) => (
+                <li key={entry.id} className="flex items-start gap-2">
+                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${["bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-red-500", "bg-violet-500"][i % 5]}`} />
+                  <div className="flex-1">
+                    <p><span className="font-semibold">{entry.user_name}</span> {entry.description.toLowerCase()}</p>
+                    <p className="text-xs text-muted-foreground">{format(parseISO(entry.timestamp), "d MMM, HH:mm")}</p>
+                  </div>
                 </li>
               ))}
             </ul>
