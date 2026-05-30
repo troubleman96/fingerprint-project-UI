@@ -56,9 +56,9 @@ Staff workstation               ← every PC with a scanner
 
 ### Step 1 — Switch from Cloudflare Workers to Node.js server
 
-The repo ships configured for Cloudflare Workers. One file must change before you build for a VPS.
+The repo originally shipped with the `@cloudflare/vite-plugin`. **This change has already been applied** — `vite.config.ts` no longer contains the Cloudflare plugin.
 
-Open [vite.config.ts](vite.config.ts) and make these changes:
+For reference, the change was:
 
 ```diff
  import { defineConfig } from "vite";
@@ -71,11 +71,7 @@ Open [vite.config.ts](vite.config.ts) and make these changes:
  export default defineConfig({
    plugins: [
      tanstackStart({
--      server: { entry: "server" },
-+      server: {
-+        preset: "node-server",
-+        entry: "server",
-+      },
+       server: { entry: "server" },
      }),
      react(),
      tailwindcss(),
@@ -85,13 +81,7 @@ Open [vite.config.ts](vite.config.ts) and make these changes:
  });
 ```
 
-Commit and push this change:
-
-```bash
-git add vite.config.ts
-git commit -m "build: switch to node-server preset for VPS deployment"
-git push origin main
-```
+TanStack Start 1.168.x defaults to a Node.js-compatible output when the Cloudflare plugin is absent. No `preset` field is needed — it is not part of this version's API.
 
 ---
 
