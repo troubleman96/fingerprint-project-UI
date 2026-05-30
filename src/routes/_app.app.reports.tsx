@@ -59,6 +59,12 @@ function ReportsPage() {
 
   const hl = stats?.headline;
 
+  const trend = (stats?.monthly_trend ?? []).map((t) => ({ ...t, label: t.month }));
+  const trendYears = [...new Set(trend.map((t) => t.year))];
+  if (trendYears.length > 1) {
+    trend.forEach((t) => { t.label = `${t.month} '${String(t.year).slice(-2)}`; });
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -95,8 +101,8 @@ function ReportsPage() {
           <h3 className="mb-3 text-sm font-semibold">Monthly Trend</h3>
           <div className="h-56">
             <ResponsiveContainer>
-              <AreaChart data={stats?.monthly_trend ?? []}>
-                <XAxis dataKey="month" fontSize={11} />
+              <AreaChart data={trend}>
+                <XAxis dataKey="label" fontSize={11} />
                 <YAxis fontSize={11} />
                 <Tooltip />
                 <Area dataKey="count" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />

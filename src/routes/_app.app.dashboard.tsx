@@ -76,6 +76,14 @@ function DashboardPage() {
 
   const hl = stats?.headline;
 
+  // Build chart-ready trend data. If the 7-month window spans two calendar
+  // years, append a short year suffix so bars are unambiguous ("Dec '24").
+  const trend = (stats?.monthly_trend ?? []).map((t) => ({ ...t, label: t.month }));
+  const years = [...new Set(trend.map((t) => t.year))];
+  if (years.length > 1) {
+    trend.forEach((t) => { t.label = `${t.month} '${String(t.year).slice(-2)}`; });
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -108,8 +116,8 @@ function DashboardPage() {
             <h3 className="mb-3 text-sm font-semibold">Cases This Semester</h3>
             <div className="h-32">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats?.monthly_trend ?? []}>
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} fontSize={11} />
+                <BarChart data={trend}>
+                  <XAxis dataKey="label" axisLine={false} tickLine={false} fontSize={11} />
                   <Tooltip />
                   <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="oklch(0.55 0.22 264)">
                     <LabelList dataKey="count" position="top" fontSize={10} />

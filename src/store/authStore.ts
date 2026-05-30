@@ -8,6 +8,8 @@ export interface AuthUser {
   full_name: string;
   role: Role;
   department: string | null;
+  phone: string | null;
+  is_active: boolean;
 }
 
 interface AuthState {
@@ -56,6 +58,8 @@ export const useAuthStore = create<AuthState>()(
               full_name: user.full_name,
               role: user.role,
               department: user.department ?? null,
+              phone: user.phone ?? null,
+              is_active: user.is_active ?? true,
             },
             isAuthenticated: true,
           });
