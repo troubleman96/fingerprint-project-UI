@@ -41,8 +41,12 @@ export const useAuthStore = create<AuthState>()(
           });
           if (!res.ok) return false;
           const body = await res.json();
-          if (!body.success) return false;
-          const { access, refresh, user } = body.data;
+          // LoginView (TokenObtainPairView) returns tokens at the root level,
+          // not inside a data envelope like other endpoints.
+          const access: string = body.access;
+          const refresh: string = body.refresh;
+          const user = body.user;
+          if (!access || !user) return false;
           set({
             access,
             refresh,
