@@ -12,7 +12,7 @@ A small Node.js process that runs on any workstation with a USB fingerprint scan
 4. [Prerequisites](#4-prerequisites)
 5. [Installation](#5-installation)
 6. [Configuration](#6-configuration)
-7. [Supported scanners and SDK wiring](#7-supported-scanners-and-sdk-wiring)
+7. [Supported scanners and SDK wiring](#7-supported-scanners-and-sdk-wiring) (incl. [Chipsailing CS9711](#7d-chipsailing-cs9711-the-scanner-currently-on-this-workstation) — Linux + Windows setup)
 8. [Enrollment flow (step by step)](#8-enrollment-flow-step-by-step)
 9. [Verification flow (step by step)](#9-verification-flow-step-by-step)
 10. [WebSocket protocol reference](#10-websocket-protocol-reference)
@@ -165,7 +165,7 @@ All configuration is via environment variables or CLI flags.
 | Variable | CLI flag | Default | Description |
 |---|---|---|---|
 | `FINGERPRINT_MOCK=1` | `--mock` | off | Force mock mode regardless of `SDK_TYPE` |
-| `SDK_TYPE` | — | `mock` | `secugen` / `mantra` / `zkteco` / `mock` |
+| `SDK_TYPE` | — | `mock` | `secugen` / `mantra` / `fprintd` / `mock` |
 | `AGENT_PORT` | `--port <n>` | `4444` | WebSocket listen port |
 | `MATCH_THRESHOLD` | — | `0.6` | Minimum match score (0.0–1.0) to accept as a positive match |
 | `API_BASE` | — | `http://localhost:8000/api` | Django API base URL (reserved for future template sync) |
@@ -284,7 +284,116 @@ Key ZK SDK functions: `ZKFPM_Init`, `ZKFPM_OpenDevice`, `ZKFPM_AcquireFingerprin
 
 ---
 
-### 7d. Mock (development / demo)
+### 7d. Chipsailing CS9711 (the scanner currently on this workstation)
+
+**Device name:** `Chipsailing CS9711Fingprint` (yes, "Fingprint" — that's the actual string reported by the hardware), made by ChipSailing Electronics (Shenzhen) Co., Ltd. USB ID `2541:0236`. It's a budget capacitive USB fingerprint dongle with no public vendor SDK — Windows only ships a WHQL driver for it (§7d-Windows below), and there is no `libsgfplib`/`libzkfp`-style shared library to FFI against on Linux. It also has a **thermal cutoff**: after several scans in quick succession you'll see `Device disabled to prevent overheating` — this is the hardware protecting itself, not a bug. Space out enroll/verify attempts by a few seconds and it recovers in a minute or two.
+
+It identifies itself as a USB **vendor-specific class** device (bulk transfer endpoints, not HID), which is why generic OS drivers can't talk to it directly.
+
+#### 7d-i. How it works — "match-on-host"
+
+Unlike SecuGen/Mantra/ZKTeco (which do matching *inside* the sensor and hand you an opaque template + a `match()` score), the CS9711 is a **match-on-host** sensor: it streams a raw ~80×80 grayscale image to the PC and does *no* matching itself. All of the fingerprint comparison work — feature extraction, matching — runs in software on the host machine.
+
+#### 7d-ii. Linux setup — how this was actually done
+
+There is no vendor Linux SDK. Instead, a community-maintained fork of **libfprint** ([`archeYR/libfprint-CS9711`](https://github.com/archeYR/libfprint-CS9711), continuing `ddlsmurf`'s original driver) adds CS9711 support by feeding the raw image into an OpenCV-based feature matcher ("sigfm") and plugging it into Linux's standard fingerprint stack — `libfprint` + `fprintd` (the same D-Bus service used for laptop-integrated fingerprint readers). The driver's own maintainer warns: *"should not be used for anything serious without serious testing"* — treat it as good enough for development/demo, not production-grade certainty.
+
+**1. Install build dependencies**
+
+```bash
+sudo apt update && sudo apt install -y \
+  git build-essential meson ninja-build cmake \
+  libnss3-dev libgudev-1.0-dev libgusb-dev libpixman-1-dev libssl-dev \
+  libopencv-dev doctest-dev libcairo2-dev libgirepository1.0-dev gobject-introspection \
+  fprintd libpam-fprintd
+```
+
+**2. Clone and build the driver**
+
+```bash
+git clone https://github.com/archeYR/libfprint-CS9711.git
+cd libfprint-CS9711
+meson setup build -Ddoc=false   # -Ddoc=false skips gtk-doc, which isn't needed to run
+ninja -C build
+sudo ninja -C build install
+sudo ldconfig
+sudo systemctl restart fprintd
+```
+
+Installing puts the new `libfprint-2.so.2` under `/usr/local/lib/...`, which `ldconfig -p` resolves *before* the distro's own `/usr/lib/...` copy — confirm with `ldconfig -p | grep libfprint-2.so` that the `/usr/local/lib` entry comes first, otherwise `fprintd` will keep loading the old library with no CS9711 support and restarting it won't pick up the change.
+
+**3. Confirm the device is recognized**
+
+```bash
+fprintd-list "$USER"
+# found 1 devices
+# ...
+# User <you> has no fingers enrolled for Chipsailing CS9711Fingprint.
+```
+
+**4. Known gotcha — polkit denies enrollment from non-desktop sessions**
+
+If `fprintd-enroll` fails immediately with `EnrollStart failed: Timeout was reached`, check `journalctl -u fprintd`. If it shows:
+
+```
+Authorization denied ... Not Authorized: net.reactivated.fprint.device.enroll
+```
+
+it means polkit doesn't consider the calling session "active" (this happens over SSH, in some automation/CI shells, etc. — normal desktop terminal sessions usually aren't affected). Fix by adding a local polkit rule scoped to your own user:
+
+```bash
+# /etc/polkit-1/rules.d/49-fprintd-<username>.rules
+polkit.addRule(function(action, subject) {
+    if ((action.id == "net.reactivated.fprint.device.enroll" ||
+         action.id == "net.reactivated.fprint.device.verify" ||
+         action.id == "net.reactivated.fprint.device.setusername") &&
+        subject.user == "<username>") {
+        return polkit.Result.YES;
+    }
+});
+```
+
+```bash
+sudo systemctl restart polkit
+```
+
+This only grants that one user permission to manage their *own* fingerprints — it doesn't weaken any other policy.
+
+**5. Test with the standard Linux fingerprint tools**
+
+```bash
+fprintd-enroll -f right-index-finger   # touch the sensor ~10-15 times when prompted
+fprintd-verify -f right-index-finger   # touch again to confirm a match
+```
+
+**6. Run the agent against it**
+
+```bash
+SDK_TYPE=fprintd node index.js
+# or: npm run start:fprintd
+```
+
+Because `fprintd` only exposes 10 named finger slots per Linux user (`left-thumb` … `right-little-finger`) and never hands out raw template bytes for offline comparison, `SDK_TYPE=fprintd` in `index.js` works differently from the other scanners:
+- **Enroll** claims the next free slot and runs `fprintd-enroll -f <slot>` for the new student.
+- **Verify** loops over every enrolled slot and runs `fprintd-verify -f <slot>` (a fresh live re-scan each time) until one reports `verify-match`.
+
+Practical consequence: **this workstation can hold at most 10 enrolled people at a time** through this path — a Linux/fprintd limitation, not something fixable in `index.js`. It's fine for a classroom demo; a production rollout with a real vendor SDK (SecuGen/Mantra/ZKTeco) wouldn't have this ceiling.
+
+#### 7d-iii. Windows setup
+
+On Windows this device is **Windows Hello / WBF (Windows Biometric Framework) certified** — that's why it can unlock the screen out of the box. The OEM driver ("ChipSailing Fingerprint UsbDriver", USB\VID_2541&PID_0236) usually installs automatically via Windows Update; if it doesn't (seen on some Windows 11 builds), download it manually from the [Microsoft Update Catalog](https://www.catalog.update.microsoft.com/) by searching the hardware ID, or via Device Manager → the unrecognized device → *Update driver*.
+
+Once installed:
+- **Settings → Accounts → Sign-in options → Fingerprint (Windows Hello)** lets you enroll and use it for Windows login/unlock — this is the "worked to unlock screen" behavior already observed.
+
+**Important limitation:** unlike Linux (where the community driver exposes the sensor through `fprintd`, which this agent can drive), there is **no known public raw SDK for the CS9711 on Windows** — only the WHQL/WBF driver that feeds into Windows' own credential system. That means, as of this writing, **`agent/index.js` cannot talk to this specific device on Windows** the way it does on Linux. Options for a Windows workstation:
+1. Use a scanner with a real published SDK — the agent already has stubs for **SecuGen** and **Mantra** (§7a/§7b) — and wire those up per their vendor docs.
+2. Request the raw capture SDK directly from ChipSailing/your hardware reseller (OEM fingerprint chip makers sometimes provide one under NDA to integrators, even when it isn't public) and add a `ChipsailingScanner` in `index.js` following the same `open()/close()/capture()/match()` pattern as the existing scanners (§15).
+3. Run the agent in `--mock` mode on Windows workstations for now, and reserve the real CS9711 hardware path for Linux workstations.
+
+---
+
+### 7e. Mock (development / demo)
 
 No hardware, no SDK, no FFI. Uses `crypto.randomBytes(512)` as a synthetic template. Enrollment always succeeds; verification always matches the first enrolled template. Use `--mock` or `SDK_TYPE=mock`.
 

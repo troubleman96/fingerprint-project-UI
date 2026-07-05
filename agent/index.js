@@ -18,7 +18,7 @@
  * Hardware support (configure SDK_TYPE below):
  *   "secugen"  — SecuGen FDU02 / FDU04 / FDU05 (most common in East Africa)
  *   "mantra"   — Mantra MFS100 / MFS110
- *   "zkteco"   — ZKTeco SLK20R / Live20R
+ *   "fprintd"  — Chipsailing CS9711 (and anything else fprintd/libfprint sees) — see agent/README.md
  *   "mock"     — deterministic simulation (dev / CI)
  *
  * Usage:
@@ -34,6 +34,7 @@ const WebSocket = require("ws");
 const crypto = require("crypto");
 const path = require("path");
 const Database = require("better-sqlite3");
+const { spawn } = require("child_process");
 
 // ── Configuration ────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -160,6 +161,85 @@ const MantraScanner = {
   match(_live, _stored) { throw new Error("Mantra match not yet wired."); },
 };
 
+/**
+ * Chipsailing CS9711 — via the system fprintd/libfprint stack.
+ *
+ * The CS9711 has no vendor SDK for Linux. It's supported instead by a
+ * community libfprint driver (archeYR/libfprint-CS9711, "match-on-host":
+ * matching runs in software using OpenCV, not on the sensor). That driver
+ * plugs into Linux's standard fingerprint service, fprintd, which we drive
+ * here via its CLI (fprintd-enroll / fprintd-verify) over D-Bus under the
+ * hood.
+ *
+ * fprintd has no concept of "many students" — it stores up to 10 named
+ * finger slots (left-thumb … right-little-finger) for the local Linux user
+ * account running this agent, and never exposes raw template bytes for
+ * offline comparison. So enrollment claims one free slot per student, and
+ * verification re-scans live against each enrolled slot in turn until one
+ * reports a match (see runFprintdEnroll/runFprintdVerify below).
+ *
+ * See agent/README.md for the full Linux setup (driver build) and the
+ * Windows setup (native OEM driver) for this device.
+ */
+const FPRINTD_FINGER_SLOTS = [
+  "left-thumb", "left-index-finger", "left-middle-finger", "left-ring-finger", "left-little-finger",
+  "right-thumb", "right-index-finger", "right-middle-finger", "right-ring-finger", "right-little-finger",
+];
+
+const FprintdScanner = {
+  name: "Chipsailing CS9711 (fprintd)",
+  open() { console.log("[fprintd] Using system fprintd/libfprint for the CS9711."); },
+  close() {},
+};
+
+function nextFprintdSlot() {
+  const used = new Set(getAllTemplates.all().map((r) => r.finger));
+  return FPRINTD_FINGER_SLOTS.find((s) => !used.has(s)) ?? null;
+}
+
+function runFprintdEnroll(slot, onStagePassed, registerChild) {
+  return new Promise((resolve, reject) => {
+    const child = spawn("fprintd-enroll", ["-f", slot]);
+    registerChild?.(child);
+    let done = false;
+    let stderrBuf = "";
+    const finish = (fn, arg) => { if (!done) { done = true; fn(arg); } };
+
+    child.stdout.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => {
+      for (const line of chunk.split("\n")) {
+        if (line.includes("enroll-stage-passed")) onStagePassed();
+        else if (line.includes("enroll-completed")) finish(resolve);
+        else if (/enroll-failed|enroll-disconnected|enroll-data-full/.test(line)) {
+          finish(reject, new Error(line.trim()));
+        }
+      }
+    });
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (d) => { stderrBuf += d; });
+    child.on("error", (e) => finish(reject, e));
+    child.on("close", (code) => {
+      finish(reject, new Error(stderrBuf.trim() || `fprintd-enroll exited with code ${code}`));
+    });
+  });
+}
+
+function runFprintdVerify(slot, registerChild) {
+  return new Promise((resolve) => {
+    const child = spawn("fprintd-verify", ["-f", slot]);
+    registerChild?.(child);
+    let matched = false;
+    let done = false;
+    child.stdout.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => {
+      if (chunk.includes("verify-match")) matched = true;
+    });
+    const finish = () => { if (!done) { done = true; resolve(matched); } };
+    child.on("close", finish);
+    child.on("error", finish);
+  });
+}
+
 // Select scanner implementation
 function buildScanner() {
   if (MOCK_MODE) return MockScanner;
@@ -167,6 +247,7 @@ function buildScanner() {
   switch (type) {
     case "secugen": return SecuGenScanner;
     case "mantra":  return MantraScanner;
+    case "fprintd": return FprintdScanner;
     default:        return MockScanner;
   }
 }
@@ -218,6 +299,7 @@ wss.on("connection", (ws) => {
   console.log("[agent] Browser connected");
   let activeOp = null; // "enroll" | "verify" | null
   let cancelled = false;
+  let currentChild = null; // spawned fprintd-enroll/verify process, for cancel()
 
   function send(msg) {
     if (ws.readyState === WebSocket.OPEN) {
@@ -241,6 +323,34 @@ wss.on("connection", (ws) => {
         const finger = msg.finger ?? "right_index";
         send({ type: "status", state: "waiting" });
         console.log(`[agent] Enroll scan started (${finger})`);
+
+        if (scanner === FprintdScanner) {
+          const slot = nextFprintdSlot();
+          if (!slot) {
+            send({ type: "error", message: "All 10 fingerprint slots on this workstation are full (fprintd limit). Delete an enrollment to free one up." });
+            activeOp = null;
+            break;
+          }
+          try {
+            let placedSent = false;
+            await runFprintdEnroll(
+              slot,
+              () => { if (!placedSent) { placedSent = true; send({ type: "finger_placed" }); } },
+              (child) => { currentChild = child; }
+            );
+            if (cancelled) break;
+            const hash = sha256hex(crypto.randomBytes(32));
+            insertTemplate.run(hash, Buffer.alloc(0), "", slot);
+            send({ type: "enroll_complete", template_hash: hash, quality_score: 1.0, finger_used: finger });
+            console.log(`[fprintd] Enrolled slot ${slot} → hash ${hash.slice(0, 16)}…`);
+          } catch (e) {
+            send({ type: "error", message: e.message });
+          } finally {
+            currentChild = null;
+            activeOp = null;
+          }
+          break;
+        }
 
         try {
           const { template, quality } = await scanner.capture(finger);
@@ -274,6 +384,39 @@ wss.on("connection", (ws) => {
         send({ type: "status", state: "waiting" });
         console.log("[agent] Verify scan started");
 
+        if (scanner === FprintdScanner) {
+          try {
+            const rows = getAllTemplates.all();
+            if (rows.length === 0) {
+              send({ type: "verify_no_match" });
+              activeOp = null;
+              break;
+            }
+            send({ type: "finger_placed" });
+            send({ type: "status", state: "processing" });
+            let matchedRow = null;
+            for (const row of rows) {
+              if (cancelled) break;
+              const ok = await runFprintdVerify(row.finger, (child) => { currentChild = child; });
+              if (ok) { matchedRow = row; break; }
+            }
+            if (cancelled) break;
+            if (matchedRow) {
+              send({ type: "verify_complete", template_hash: matchedRow.hash, score: 1.0 });
+              console.log(`[fprintd] Verified → slot ${matchedRow.finger}`);
+            } else {
+              send({ type: "verify_no_match" });
+              console.log("[fprintd] No match found across enrolled slots");
+            }
+          } catch (e) {
+            send({ type: "error", message: e.message });
+          } finally {
+            currentChild = null;
+            activeOp = null;
+          }
+          break;
+        }
+
         try {
           const { template, quality } = await scanner.capture("any");
           if (cancelled) break;
@@ -304,6 +447,7 @@ wss.on("connection", (ws) => {
       case "cancel":
         cancelled = true;
         activeOp = null;
+        if (currentChild) { try { currentChild.kill(); } catch { /* already exited */ } currentChild = null; }
         send({ type: "status", state: "idle" });
         console.log("[agent] Scan cancelled");
         break;
@@ -316,6 +460,7 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     cancelled = true;
     activeOp = null;
+    if (currentChild) { try { currentChild.kill(); } catch { /* already exited */ } currentChild = null; }
     console.log("[agent] Browser disconnected");
   });
 });
