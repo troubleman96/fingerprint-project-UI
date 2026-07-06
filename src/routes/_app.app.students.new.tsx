@@ -11,8 +11,10 @@ import { Switch } from "@/components/ui/switch";
 import { FingerprintScanner } from "@/components/shared/FingerprintScanner";
 import { departmentsApi } from "@/api/departments";
 import { studentsApi } from "@/api/students";
+import { biometricApi } from "@/api/biometric";
 import { toast } from "sonner";
 import { formatApiError, type ApiError } from "@/api/client";
+import type { FingerprintResult } from "@/hooks/useFingerprint";
 
 export const Route = createFileRoute("/_app/app/students/new")({
   component: StudentCreatePage,
@@ -26,6 +28,7 @@ function StudentCreatePage() {
   const { reg_number: prefillRegNumber } = Route.useSearch();
   const [enroll, setEnroll] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
+  const [scanResult, setScanResult] = useState<FingerprintResult | null>(null);
 
   const [form, setForm] = useState({
     first_name: "", last_name: "", reg_number: prefillRegNumber ?? "",
@@ -41,8 +44,21 @@ function StudentCreatePage() {
 
   const create = useMutation({
     mutationFn: (payload: FormData) => studentsApi.create(payload),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Student registered successfully");
+      if (enroll && scanResult) {
+        try {
+          await biometricApi.enroll({
+            reg_number: form.reg_number,
+            template_hash: scanResult.template_hash,
+            finger_used: scanResult.finger_used,
+            quality_score: scanResult.quality_score,
+          });
+          toast.success("Fingerprint enrolled");
+        } catch (e) {
+          toast.error(`Student saved, but fingerprint enrollment failed: ${formatApiError(e as ApiError)}. Enroll from the Biometric page.`);
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ["students"] });
       navigate({ to: "/app/students" });
     },
@@ -139,7 +155,16 @@ function StudentCreatePage() {
             </div>
             {enroll && (
               <div className="mt-4">
-                <FingerprintScanner label="Biometric captured — will be enrolled after save" />
+                <FingerprintScanner
+                  label={scanResult ? "Biometric captured — will be enrolled after save" : "Scan successful"}
+                  onResult={(ok, result) => {
+                    if (ok && result) setScanResult(result);
+                    else toast.error("Scan unsuccessful — try again");
+                  }}
+                />
+                {!scanResult && (
+                  <p className="mt-2 text-xs text-amber-600">Scan a fingerprint before saving, or turn this off to register without one.</p>
+                )}
               </div>
             )}
           </Card>

@@ -193,9 +193,21 @@ function runFprintdEnroll(slot, onStagePassed, registerChild) {
     child.stderr.on("data", (d) => { stderrBuf += d; });
     child.on("error", (e) => finish(reject, e));
     child.on("close", (code) => {
-      finish(reject, new Error(stderrBuf.trim() || `fprintd-enroll exited with code ${code}`));
+      finish(reject, friendlyFprintdError(stderrBuf, code));
     });
   });
+}
+
+// Translates the (usually unhelpful) raw fprintd-enroll/verify exit into a
+// message that tells the operator what to actually do — this sensor is
+// prone to transient USB/thermal drops, and a bare "exited with code 1" with
+// no stdout status line at all almost always means it never reached the
+// device in the first place.
+function friendlyFprintdError(stderrBuf, code) {
+  if (!stderrBuf && code !== 0) {
+    return new Error("Scanner not responding — check the USB cable is plugged directly into the machine (not a hub/dock), wait a few seconds, and try again.");
+  }
+  return new Error(stderrBuf.trim() || `fprintd-enroll exited with code ${code}`);
 }
 
 function runFprintdVerify(slot, registerChild) {
