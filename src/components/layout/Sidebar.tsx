@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, FolderOpen, BarChart3, Fingerprint, ScrollText, UserCog, Settings, Shield, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Users, FolderOpen, BarChart3, Fingerprint, ScrollText, UserCog, Settings, Shield, MessageSquare, Download } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 const main = [
@@ -14,6 +14,7 @@ const system: { to: string; label: string; icon: any; roles: Role[]; dot?: boole
   { to: "/app/biometric", label: "Biometric Auth", icon: Fingerprint, roles: ["ADMIN", "OFFICER", "STAFF"] },
   { to: "/app/audit", label: "Audit Log", icon: ScrollText, roles: ["ADMIN", "OFFICER"], dot: true },
   { to: "/app/notifications", label: "Notifications", icon: MessageSquare, roles: ["ADMIN"] },
+  { to: "/app/export", label: "Export", icon: Download, roles: ["ADMIN"] },
   { to: "/app/users", label: "User Admin", icon: UserCog, roles: ["ADMIN"] },
   { to: "/app/settings", label: "Settings", icon: Settings, roles: ["ADMIN", "OFFICER", "STAFF"] },
 ];

@@ -16,6 +16,7 @@ export const Route = createFileRoute("/login")({ component: LoginPage });
 function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
+  const loginWithBiometric = useAuthStore((s) => s.loginWithBiometric);
   const { theme, toggleTheme } = useThemeStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -100,12 +101,24 @@ function LoginPage() {
         <Dialog open={bioOpen} onOpenChange={setBioOpen}>
           <DialogContent>
             <DialogTitle>Biometric Login</DialogTitle>
-            <FingerprintScanner onResult={(ok) => {
-              if (ok) {
-                setBioOpen(false);
-                toast.info("Biometric login requires a hardware scanner connected to this workstation.");
-              }
-            }} label="Scan fingerprint" />
+            <FingerprintScanner
+              mode="verify"
+              label="Fingerprint matched — signing in…"
+              onResult={async (ok, result) => {
+                if (!ok || !result) {
+                  toast.error("Fingerprint not recognised");
+                  return;
+                }
+                const success = await loginWithBiometric(result.template_hash);
+                if (success) {
+                  setBioOpen(false);
+                  toast.success("Welcome back!");
+                  navigate({ to: "/app/dashboard" });
+                } else {
+                  toast.error("This fingerprint isn't enrolled for login. Enroll it first in Settings.");
+                }
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>

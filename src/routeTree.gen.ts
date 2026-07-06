@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAppSettingsRouteImport } from './routes/_app.app.settings'
 import { Route as AppAppReportsRouteImport } from './routes/_app.app.reports'
 import { Route as AppAppNotificationsRouteImport } from './routes/_app.app.notifications'
+import { Route as AppAppExportRouteImport } from './routes/_app.app.export'
 import { Route as AppAppDashboardRouteImport } from './routes/_app.app.dashboard'
 import { Route as AppAppAuditRouteImport } from './routes/_app.app.audit'
 import { Route as AppAppUsersIndexRouteImport } from './routes/_app.app.users.index'
@@ -57,6 +58,11 @@ const AppAppReportsRoute = AppAppReportsRouteImport.update({
 const AppAppNotificationsRoute = AppAppNotificationsRouteImport.update({
   id: '/app/notifications',
   path: '/app/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppExportRoute = AppAppExportRouteImport.update({
+  id: '/app/export',
+  path: '/app/export',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAppDashboardRoute = AppAppDashboardRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAppAuditRoute
   '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/export': typeof AppAppExportRoute
   '/app/notifications': typeof AppAppNotificationsRoute
   '/app/reports': typeof AppAppReportsRoute
   '/app/settings': typeof AppAppSettingsRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAppAuditRoute
   '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/export': typeof AppAppExportRoute
   '/app/notifications': typeof AppAppNotificationsRoute
   '/app/reports': typeof AppAppReportsRoute
   '/app/settings': typeof AppAppSettingsRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/app/audit': typeof AppAppAuditRoute
   '/_app/app/dashboard': typeof AppAppDashboardRoute
+  '/_app/app/export': typeof AppAppExportRoute
   '/_app/app/notifications': typeof AppAppNotificationsRoute
   '/_app/app/reports': typeof AppAppReportsRoute
   '/_app/app/settings': typeof AppAppSettingsRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/dashboard'
+    | '/app/export'
     | '/app/notifications'
     | '/app/reports'
     | '/app/settings'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/dashboard'
+    | '/app/export'
     | '/app/notifications'
     | '/app/reports'
     | '/app/settings'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/app/audit'
     | '/_app/app/dashboard'
+    | '/_app/app/export'
     | '/_app/app/notifications'
     | '/_app/app/reports'
     | '/_app/app/settings'
@@ -310,6 +322,13 @@ declare module '@tanstack/react-router' {
       path: '/app/notifications'
       fullPath: '/app/notifications'
       preLoaderRoute: typeof AppAppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/export': {
+      id: '/_app/app/export'
+      path: '/app/export'
+      fullPath: '/app/export'
+      preLoaderRoute: typeof AppAppExportRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/app/dashboard': {
@@ -439,6 +458,7 @@ const AppAppStudentsIdRouteWithChildren =
 interface AppRouteChildren {
   AppAppAuditRoute: typeof AppAppAuditRoute
   AppAppDashboardRoute: typeof AppAppDashboardRoute
+  AppAppExportRoute: typeof AppAppExportRoute
   AppAppNotificationsRoute: typeof AppAppNotificationsRoute
   AppAppReportsRoute: typeof AppAppReportsRoute
   AppAppSettingsRoute: typeof AppAppSettingsRoute
@@ -457,6 +477,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAppAuditRoute: AppAppAuditRoute,
   AppAppDashboardRoute: AppAppDashboardRoute,
+  AppAppExportRoute: AppAppExportRoute,
   AppAppNotificationsRoute: AppAppNotificationsRoute,
   AppAppReportsRoute: AppAppReportsRoute,
   AppAppSettingsRoute: AppAppSettingsRoute,

@@ -1,13 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Fingerprint } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { FingerprintScanner } from "@/components/shared/FingerprintScanner";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
+import { authApi } from "@/api/auth";
 import { toast } from "sonner";
+import type { FingerprintResult } from "@/hooks/useFingerprint";
 
 export const Route = createFileRoute("/_app/app/settings")({ component: SettingsPage });
 
@@ -15,6 +20,21 @@ function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const { theme, setTheme } = useThemeStore();
   const isAdmin = user?.role === "ADMIN";
+  const [enrolled, setEnrolled] = useState(false);
+
+  const handleBiometricResult = async (ok: boolean, result?: FingerprintResult) => {
+    if (!ok || !result) {
+      toast.error("Scan unsuccessful — try again");
+      return;
+    }
+    try {
+      await authApi.enrollBiometric(result.template_hash, result.finger_used);
+      setEnrolled(true);
+      toast.success("Fingerprint login enrolled — you can now log in with your fingerprint");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -41,6 +61,17 @@ function SettingsPage() {
             <div><Label>New Password</Label><Input type="password" /></div>
             <div><Label>Confirm New</Label><Input type="password" /></div>
             <Button onClick={() => toast.success("Password changed")} className="w-fit">Update Password</Button>
+          </div>
+          <div className="grid max-w-xl gap-4 rounded-xl border border-border bg-card p-6">
+            <h3 className="flex items-center gap-2 font-semibold"><Fingerprint className="h-4 w-4" /> Fingerprint Login</h3>
+            <p className="text-sm text-muted-foreground">
+              Enroll your own fingerprint to log into DisciplineTrack without a password, using the scanner connected to this workstation.
+            </p>
+            {enrolled ? (
+              <p className="text-sm font-medium text-emerald-600">Fingerprint login is enrolled for your account.</p>
+            ) : (
+              <FingerprintScanner mode="enroll" label="Fingerprint captured — enrolled for login" onResult={handleBiometricResult} />
+            )}
           </div>
         </TabsContent>
 
