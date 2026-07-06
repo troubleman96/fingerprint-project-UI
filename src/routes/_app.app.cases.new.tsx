@@ -48,9 +48,18 @@ function CaseCreatePage() {
   });
   const officers = (usersRes?.data ?? []).filter((u) => u.role === "OFFICER" || u.role === "ADMIN");
 
+  const missingFields = [
+    !student && "Student",
+    !selectedType && "Incident Type",
+    !date && "Date of Incident",
+    !desc.trim() && "Description",
+  ].filter((f): f is string => Boolean(f));
+
   const submit = useMutation({
     mutationFn: async () => {
-      if (!student || !selectedType || !date || !desc) throw new Error("Fill all required fields");
+      if (missingFields.length > 0 || !student || !selectedType) {
+        throw new Error(`Missing required field(s): ${missingFields.join(", ")}`);
+      }
       const newCase = await casesApi.create({
         student: student.id,
         incident_type: selectedType.id,
@@ -201,10 +210,19 @@ function CaseCreatePage() {
           </div>
         )}
 
+        {step === 2 && missingFields.length > 0 && (
+          <p className="mt-4 text-xs text-amber-600">Still needed before continuing: {missingFields.filter((f) => f !== "Student").join(", ") || "—"}</p>
+        )}
+
         <div className="mt-6 flex justify-between">
           <Button variant="outline" disabled={step === 1} onClick={() => setStep(step - 1)}>← Back</Button>
           {step < 4
-            ? <Button onClick={() => setStep(step + 1)} disabled={step === 1 && !student}>Next Step →</Button>
+            ? <Button
+                onClick={() => setStep(step + 1)}
+                disabled={(step === 1 && !student) || (step === 2 && missingFields.length > 0)}
+              >
+                Next Step →
+              </Button>
             : <Button onClick={() => submit.mutate()} disabled={submit.isPending}>{submit.isPending ? "Filing…" : "Submit Case"}</Button>
           }
         </div>
