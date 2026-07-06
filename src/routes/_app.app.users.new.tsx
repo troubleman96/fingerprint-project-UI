@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuthStore } from "@/store/authStore";
 import { usersApi } from "@/api/users";
 import { toast } from "sonner";
-import type { ApiError } from "@/api/client";
+import { formatApiError, type ApiError } from "@/api/client";
 
 export const Route = createFileRoute("/_app/app/users/new")({ component: UserCreatePage });
 
@@ -42,7 +42,7 @@ function UserCreatePage() {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       navigate({ to: "/app/users" });
     },
-    onError: (e: ApiError) => toast.error(e.message),
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {

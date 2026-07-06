@@ -54,6 +54,10 @@ export const studentsApi = {
   deactivate: async (id: string): Promise<ApiResponse<null>> =>
     apiFetch(`/students/${id}/`, { method: "DELETE" }),
 
+  /** Permanently deletes the record (Admin only). Fails if the student has case history. */
+  purge: async (id: string): Promise<ApiResponse<null>> =>
+    apiFetch(`/students/${id}/purge/`, { method: "DELETE" }),
+
   cases: async (id: string): Promise<CaseListItem[]> => {
     const res = await apiFetch<CaseListItem[]>(`/students/${id}/cases/`);
     return res.data;

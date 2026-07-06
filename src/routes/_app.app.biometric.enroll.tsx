@@ -3,12 +3,11 @@ import { useState } from "react";
 import { ChevronRight, CheckCircle2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar } from "@/components/shared/Avatar";
-import { BiometricSimulator } from "@/components/shared/BiometricSimulator";
-import { studentsApi } from "@/api/students";
+import { FingerprintScanner } from "@/components/shared/FingerprintScanner";
+import { StudentTypeahead } from "@/components/shared/StudentTypeahead";
 import { biometricApi } from "@/api/biometric";
 import { useQueryClient } from "@tanstack/react-query";
 import type { StudentListItem } from "@/types";
@@ -24,27 +23,15 @@ function EnrollPage() {
   const [step, setStep] = useState<Step>("search");
   const [reg, setReg] = useState("");
   const [student, setStudent] = useState<StudentListItem | null>(null);
-  const [searching, setSearching] = useState(false);
   const [finger, setFinger] = useState("right_index");
   const [scanResult, setScanResult] = useState<FingerprintResult | null>(null);
   const [enrolling, setEnrolling] = useState(false);
 
-  const findStudent = async () => {
-    if (!reg.trim()) return;
-    setSearching(true);
-    try {
-      const res = await studentsApi.list({ search: reg.trim(), page_size: 1 });
-      const found = res.data[0] ?? null;
-      setStudent(found);
-      setScanResult(null);
-      if (!found) {
-        toast.error("No student found with that registration number or name.");
-      } else {
-        setStep("scan");
-      }
-    } finally {
-      setSearching(false);
-    }
+  const selectStudent = (s: StudentListItem) => {
+    setStudent(s);
+    setReg(s.reg_number);
+    setScanResult(null);
+    setStep("scan");
   };
 
   const handleScanResult = (ok: boolean, result?: FingerprintResult) => {
@@ -116,17 +103,7 @@ function EnrollPage() {
         {/* Left — Student search */}
         <div className="rounded-xl border border-border bg-card p-5 space-y-4">
           <h3 className="font-semibold">1. Find Student</h3>
-          <div className="flex gap-2">
-            <Input
-              value={reg}
-              onChange={(e) => setReg(e.target.value)}
-              placeholder="Reg number or name"
-              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), findStudent())}
-            />
-            <Button onClick={findStudent} disabled={searching || !reg.trim()}>
-              {searching ? "…" : "Search"}
-            </Button>
-          </div>
+          <StudentTypeahead value={reg} onChange={setReg} onSelect={selectStudent} placeholder="Reg number or name" />
           {student && (
             <div className="flex items-center gap-3 rounded-lg border border-border p-3">
               <Avatar name={student.full_name} />
@@ -173,7 +150,7 @@ function EnrollPage() {
           )}
 
           {step === "scan" && (
-            <BiometricSimulator
+            <FingerprintScanner
               mode="enroll"
               finger={finger}
               onResult={handleScanResult}

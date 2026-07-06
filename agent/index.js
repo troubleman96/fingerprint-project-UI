@@ -19,13 +19,15 @@
  *   "secugen"  — SecuGen FDU02 / FDU04 / FDU05 (most common in East Africa)
  *   "mantra"   — Mantra MFS100 / MFS110
  *   "fprintd"  — Chipsailing CS9711 (and anything else fprintd/libfprint sees) — see agent/README.md
- *   "mock"     — deterministic simulation (dev / CI)
+ *
+ * This agent only talks to real hardware — there is no simulated/mock mode.
+ * If the configured scanner can't be opened, the process logs why and exits
+ * rather than pretending a scan succeeded.
  *
  * Usage:
  *   npm install
- *   node index.js              # auto-detect scanner
- *   node index.js --mock       # run in mock mode (no hardware needed)
- *   node index.js --port 5555  # custom port
+ *   SDK_TYPE=fprintd node index.js   # real CS9711 via fprintd (default)
+ *   node index.js --port 5555        # custom port
  */
 
 "use strict";
@@ -38,7 +40,6 @@ const { spawn } = require("child_process");
 
 // ── Configuration ────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
-const MOCK_MODE = args.includes("--mock") || process.env.FINGERPRINT_MOCK === "1";
 const PORT = (() => {
   const i = args.indexOf("--port");
   return i !== -1 ? parseInt(args[i + 1], 10) : parseInt(process.env.AGENT_PORT ?? "4444", 10);
@@ -68,33 +69,6 @@ const insertTemplate = db.prepare(
 const getAllTemplates = db.prepare("SELECT hash, template, reg_number, finger FROM templates");
 
 // ── Scanner abstraction ───────────────────────────────────────────────────────
-
-/**
- * MOCK scanner — deterministic for testing.
- * In mock mode: enrollment always succeeds with a random hash.
- * Verification: always matches the FIRST enrolled template (for demo purposes).
- */
-const MockScanner = {
-  name: "Mock Scanner (demo mode)",
-  open() { console.log("[mock] Scanner opened"); },
-  close() {},
-
-  capture(finger) {
-    return new Promise((resolve) => {
-      console.log(`[mock] Capturing ${finger}…`);
-      setTimeout(() => {
-        // Generate a deterministic-looking but unique template binary
-        const template = crypto.randomBytes(512);
-        resolve({ template, quality: 0.94 });
-      }, 1500);
-    });
-  },
-
-  match(liveTemplate, storedTemplate) {
-    // Mock: return a high score for the first stored template (demo)
-    return 0.97;
-  },
-};
 
 /**
  * SecuGen scanner — uses the SecuGen SGFPM SDK via FFI.
@@ -240,15 +214,14 @@ function runFprintdVerify(slot, registerChild) {
   });
 }
 
-// Select scanner implementation
+// Select scanner implementation — real hardware only, no mock fallback.
 function buildScanner() {
-  if (MOCK_MODE) return MockScanner;
-  const type = (process.env.SDK_TYPE ?? "mock").toLowerCase();
+  const type = (process.env.SDK_TYPE ?? "fprintd").toLowerCase();
   switch (type) {
     case "secugen": return SecuGenScanner;
     case "mantra":  return MantraScanner;
     case "fprintd": return FprintdScanner;
-    default:        return MockScanner;
+    default:        throw new Error(`Unknown SDK_TYPE '${type}'. Use one of: secugen, mantra, fprintd.`);
   }
 }
 
@@ -256,10 +229,9 @@ const scanner = buildScanner();
 try {
   scanner.open();
 } catch (e) {
-  console.error(`[agent] Failed to open scanner: ${e.message}`);
-  console.error("[agent] Falling back to mock mode.");
-  Object.assign(scanner, MockScanner);
-  scanner.open();
+  console.error(`[agent] Failed to open scanner '${scanner.name}': ${e.message}`);
+  console.error("[agent] No mock fallback — fix the hardware/driver and restart.");
+  process.exit(1);
 }
 
 // ── 1:N matching ──────────────────────────────────────────────────────────────
@@ -292,7 +264,7 @@ function sha256hex(buffer) {
 // ── WebSocket server ──────────────────────────────────────────────────────────
 const wss = new WebSocket.Server({ port: PORT, host: "127.0.0.1" });
 console.log(`[agent] Fingerprint agent running on ws://127.0.0.1:${PORT}`);
-console.log(`[agent] Mode: ${MOCK_MODE ? "MOCK (demo)" : `HARDWARE (${scanner.name})`}`);
+console.log(`[agent] Mode: HARDWARE (${scanner.name})`);
 console.log(`[agent] Match threshold: ${MATCH_THRESHOLD}`);
 
 wss.on("connection", (ws) => {

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { casesApi } from "@/api/cases";
 import { toast } from "sonner";
-import type { ApiError } from "@/api/client";
+import { formatApiError, type ApiError } from "@/api/client";
 
 export const Route = createFileRoute("/_app/app/cases/$id/edit")({ component: CaseEditPage });
 
@@ -29,7 +29,7 @@ function CaseEditPage() {
       toast.success("Case updated");
       navigate({ to: "/app/cases/$id", params: { id } });
     },
-    onError: (e: ApiError) => toast.error(e.message),
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />;

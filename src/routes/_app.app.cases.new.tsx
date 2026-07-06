@@ -9,14 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { BiometricSimulator } from "@/components/shared/BiometricSimulator";
-import { studentsApi } from "@/api/students";
+import { FingerprintScanner } from "@/components/shared/FingerprintScanner";
+import { StudentTypeahead } from "@/components/shared/StudentTypeahead";
 import { casesApi } from "@/api/cases";
 import { incidentTypesApi } from "@/api/incidentTypes";
 import { usersApi } from "@/api/users";
 import type { StudentListItem, IncidentType } from "@/types";
 import { toast } from "sonner";
-import type { ApiError } from "@/api/client";
+import { formatApiError, type ApiError } from "@/api/client";
 
 export const Route = createFileRoute("/_app/app/cases/new")({ component: CaseCreatePage });
 
@@ -34,7 +34,6 @@ function CaseCreatePage() {
   const [desc, setDesc] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [searching, setSearching] = useState(false);
 
   const { data: incidentTypes = [] } = useQuery({
     queryKey: ["incident-types"],
@@ -71,21 +70,8 @@ function CaseCreatePage() {
       queryClient.invalidateQueries({ queryKey: ["cases"] });
       navigate({ to: "/app/cases/$id", params: { id: c.id } });
     },
-    onError: (e: ApiError) => toast.error(e.message),
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
-
-  const findStudent = async () => {
-    if (!reg.trim()) return;
-    setSearching(true);
-    try {
-      const res = await studentsApi.list({ search: reg.trim(), page_size: 1 });
-      const found = res.data[0] ?? null;
-      setStudent(found);
-      if (!found) toast.error("No student found with that registration number");
-    } finally {
-      setSearching(false);
-    }
-  };
 
   const steps = ["Student", "Incident", "Evidence", "Review"];
 
@@ -116,15 +102,19 @@ function CaseCreatePage() {
               <label className={`cursor-pointer rounded-lg border p-4 ${method === "reg" ? "border-blue-600" : "border-border"}`}>
                 <RadioGroupItem value="reg" className="sr-only" />
                 <p className="font-medium">Search by Registration Number</p>
-                <div className="mt-3 flex gap-2">
-                  <Input value={reg} onChange={(e) => setReg(e.target.value)} placeholder="e.g. CSC/2024/001" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), findStudent())} />
-                  <Button type="button" onClick={findStudent} disabled={searching}>{searching ? "…" : "Search"}</Button>
+                <div className="mt-3">
+                  <StudentTypeahead
+                    value={reg}
+                    onChange={setReg}
+                    onSelect={(s) => { setStudent(s); setReg(s.reg_number); }}
+                    placeholder="e.g. CSC/2024/001 or student name"
+                  />
                 </div>
               </label>
               <label className={`cursor-pointer rounded-lg border p-4 ${method === "bio" ? "border-blue-600" : "border-border"}`}>
                 <RadioGroupItem value="bio" className="sr-only" />
                 <p className="mb-3 font-medium">Biometric Scan</p>
-                <BiometricSimulator forceSuccess onResult={(ok) => { if (ok) toast.info("Connect hardware scanner to use biometric lookup"); }} />
+                <FingerprintScanner mode="verify" onResult={(ok) => { if (ok) toast.info("Connect hardware scanner to use biometric lookup"); }} />
               </label>
             </RadioGroup>
             {student && (

@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
-import { BiometricSimulator } from "@/components/shared/BiometricSimulator";
+import { FingerprintScanner } from "@/components/shared/FingerprintScanner";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
@@ -100,7 +100,7 @@ function LoginPage() {
         <Dialog open={bioOpen} onOpenChange={setBioOpen}>
           <DialogContent>
             <DialogTitle>Biometric Login</DialogTitle>
-            <BiometricSimulator forceSuccess onResult={(ok) => {
+            <FingerprintScanner onResult={(ok) => {
               if (ok) {
                 setBioOpen(false);
                 toast.info("Biometric login requires a hardware scanner connected to this workstation.");

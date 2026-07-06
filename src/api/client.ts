@@ -31,6 +31,15 @@ export class ApiError extends Error {
   }
 }
 
+/** Turns { reg_number: ["already exists"] } into "reg_number: already exists", falling back to the generic message. */
+export function formatApiError(e: ApiError): string {
+  if (!e.errors) return e.message;
+  const fieldMessages = Object.entries(e.errors)
+    .map(([field, msgs]) => `${field}: ${msgs.join(", ")}`)
+    .join(" · ");
+  return fieldMessages || e.message;
+}
+
 let isRefreshing = false;
 let refreshQueue: Array<(token: string | null) => void> = [];
 

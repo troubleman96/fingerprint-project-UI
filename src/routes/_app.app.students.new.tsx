@@ -8,22 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { BiometricSimulator } from "@/components/shared/BiometricSimulator";
+import { FingerprintScanner } from "@/components/shared/FingerprintScanner";
 import { departmentsApi } from "@/api/departments";
 import { studentsApi } from "@/api/students";
 import { toast } from "sonner";
-import type { ApiError } from "@/api/client";
+import { formatApiError, type ApiError } from "@/api/client";
 
-export const Route = createFileRoute("/_app/app/students/new")({ component: StudentCreatePage });
+export const Route = createFileRoute("/_app/app/students/new")({
+  component: StudentCreatePage,
+  validateSearch: (search: Record<string, unknown>): { reg_number?: string } =>
+    typeof search.reg_number === "string" ? { reg_number: search.reg_number } : {},
+});
 
 function StudentCreatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { reg_number: prefillRegNumber } = Route.useSearch();
   const [enroll, setEnroll] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
 
   const [form, setForm] = useState({
-    first_name: "", last_name: "", reg_number: "",
+    first_name: "", last_name: "", reg_number: prefillRegNumber ?? "",
     date_of_birth: "", gender: "", phone: "", email: "",
     department_id: "", academic_year: "", level: "",
   });
@@ -41,7 +46,7 @@ function StudentCreatePage() {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       navigate({ to: "/app/students" });
     },
-    onError: (e: ApiError) => toast.error(e.message),
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
 
   const field = (key: keyof typeof form) => ({
@@ -75,6 +80,11 @@ function StudentCreatePage() {
         <span>Register</span>
       </nav>
       <PageHeader title="Register New Student" />
+      {prefillRegNumber && (
+        <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-700 dark:text-blue-400">
+          No existing student matched "{prefillRegNumber}" — registration number pre-filled below.
+        </div>
+      )}
       <form onSubmit={submit} className="grid gap-5 lg:grid-cols-2">
         <Card title="Personal Information">
           <Field label="First Name *"><Input required {...field("first_name")} /></Field>
@@ -129,7 +139,7 @@ function StudentCreatePage() {
             </div>
             {enroll && (
               <div className="mt-4">
-                <BiometricSimulator label="Biometric captured — will be enrolled after save" />
+                <FingerprintScanner label="Biometric captured — will be enrolled after save" />
               </div>
             )}
           </Card>

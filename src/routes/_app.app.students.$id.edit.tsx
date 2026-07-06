@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { studentsApi } from "@/api/students";
 import { toast } from "sonner";
-import type { ApiError } from "@/api/client";
+import { formatApiError, type ApiError } from "@/api/client";
 
 export const Route = createFileRoute("/_app/app/students/$id/edit")({ component: StudentEditPage });
 
@@ -30,7 +30,7 @@ function StudentEditPage() {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       navigate({ to: "/app/students/$id", params: { id } });
     },
-    onError: (e: ApiError) => toast.error(e.message),
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />;

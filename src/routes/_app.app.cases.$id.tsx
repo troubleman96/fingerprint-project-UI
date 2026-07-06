@@ -14,7 +14,7 @@ import { casesApi } from "@/api/cases";
 import type { CaseStatus, CaseOutcome } from "@/types";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
-import type { ApiError } from "@/api/client";
+import { formatApiError, type ApiError } from "@/api/client";
 
 export const Route = createFileRoute("/_app/app/cases/$id")({ component: CaseDetailPage });
 
@@ -49,7 +49,7 @@ function CaseDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["case", id] });
       toast.success("Note added");
     },
-    onError: (e: ApiError) => toast.error(e.message),
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
 
   const uploadDoc = useMutation({
@@ -58,7 +58,7 @@ function CaseDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["case", id] });
       toast.success("Document uploaded");
     },
-    onError: (e: ApiError) => toast.error(e.message),
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
 
   const transition = useMutation({
@@ -76,7 +76,7 @@ function CaseDetailPage() {
       setNextStatus("");
       setOutcome("");
     },
-    onError: (e: ApiError) => toast.error(e.message),
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />;

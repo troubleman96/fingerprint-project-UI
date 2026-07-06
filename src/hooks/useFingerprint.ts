@@ -94,6 +94,16 @@ export function useFingerprint(callbacks?: {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FingerprintResult | null>(null);
 
+  // Callers pass a fresh { onEnrollComplete, ... } object literal on every
+  // render. Reading it through a ref (instead of putting it in handleMessage's
+  // dependency array) keeps handleMessage/connect referentially stable, so
+  // the mount effect below doesn't tear down and reopen the WebSocket on
+  // every re-render.
+  const callbacksRef = useRef(callbacks);
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  }, [callbacks]);
+
   const clearScanTimeout = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
   };
@@ -154,7 +164,7 @@ export function useFingerprint(callbacks?: {
           };
           setResult(r);
           setState("success");
-          callbacks?.onEnrollComplete?.(r);
+          callbacksRef.current?.onEnrollComplete?.(r);
           break;
         }
 
@@ -166,13 +176,13 @@ export function useFingerprint(callbacks?: {
             quality_score: msg.score ?? 1,
             finger_used: "",
           });
-          callbacks?.onVerifyComplete?.(msg.template_hash!, msg.score ?? 1);
+          callbacksRef.current?.onVerifyComplete?.(msg.template_hash!, msg.score ?? 1);
           break;
 
         case "verify_no_match":
           clearScanTimeout();
           setState("no_match");
-          callbacks?.onNoMatch?.();
+          callbacksRef.current?.onNoMatch?.();
           break;
 
         case "error":
@@ -182,7 +192,7 @@ export function useFingerprint(callbacks?: {
           break;
       }
     },
-    [callbacks],
+    [],
   );
 
   const connect = useCallback(() => {

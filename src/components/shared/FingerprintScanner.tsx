@@ -1,19 +1,16 @@
 /**
- * BiometricSimulator / FingerprintScanner
+ * FingerprintScanner
  *
- * When the local agent is running (ws://localhost:4444) this component uses
- * real hardware via the useFingerprint hook.
- * When the agent is offline it falls back to a timed simulation so the UI
- * stays explorable during development or demos without a scanner attached.
+ * Talks only to the local agent (ws://localhost:4444) for real hardware
+ * enroll/verify. There is no simulated fallback — if the agent isn't
+ * reachable, scanning is disabled and the banner says so.
  */
 import { useState, useEffect } from "react";
 import { Fingerprint, Check, X, WifiOff, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFingerprint, type FingerprintResult } from "@/hooks/useFingerprint";
 
-export interface BiometricSimulatorProps {
-  /** Force simulation to always succeed (dev/demo mode) */
-  forceSuccess?: boolean;
+export interface FingerprintScannerProps {
   /** Called with true on success, false on failure */
   onResult?: (ok: boolean, result?: FingerprintResult) => void;
   /** Override the success label text */
@@ -26,15 +23,13 @@ export interface BiometricSimulatorProps {
 
 type VisualState = "idle" | "scanning" | "success" | "failure" | "no_match" | "low_quality";
 
-export function BiometricSimulator({
-  forceSuccess,
+export function FingerprintScanner({
   onResult,
   label,
   mode = "enroll",
   finger = "right_index",
-}: BiometricSimulatorProps) {
+}: FingerprintScannerProps) {
   const [visual, setVisual] = useState<VisualState>("idle");
-  const [simRunning, setSimRunning] = useState(false);
 
   const fp = useFingerprint({
     onEnrollComplete: (result) => {
@@ -67,38 +62,12 @@ export function BiometricSimulator({
     }
   }, [fp.state, fp.agentConnected]);
 
-  // ── Simulation fallback (agent offline) ──────────────────────────────────
-  const runSim = () => {
-    if (simRunning) return;
-    setSimRunning(true);
-    setVisual("scanning");
-    setTimeout(() => {
-      const ok = forceSuccess !== undefined ? forceSuccess : Math.random() < 0.8;
-      setVisual(ok ? "success" : "failure");
-      setSimRunning(false);
-      if (ok) {
-        onResult?.(true, {
-          template_hash: Array.from(crypto.getRandomValues(new Uint8Array(32)))
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join(""),
-          quality_score: 0.94,
-          finger_used: finger,
-        });
-      } else {
-        onResult?.(false);
-      }
-    }, 1800);
-  };
-
   const handleScanClick = () => {
-    if (fp.agentConnected) {
-      if (mode === "verify") {
-        fp.startVerify();
-      } else {
-        fp.startEnroll(finger);
-      }
+    if (!fp.agentConnected) return;
+    if (mode === "verify") {
+      fp.startVerify();
     } else {
-      runSim();
+      fp.startEnroll(finger);
     }
   };
 
@@ -119,16 +88,16 @@ export function BiometricSimulator({
         <div className="flex w-full items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
           <WifiOff className="h-3.5 w-3.5 shrink-0" />
           <span>
-            <strong>Agent offline</strong> — running in demo mode.{" "}
+            <strong>Scanner offline</strong> — real hardware required.{" "}
             <a
               href="https://github.com/troubleman96/fingerprint-project-UI/blob/main/agent/README.md"
               target="_blank"
               rel="noreferrer"
               className="underline hover:no-underline"
             >
-              Install the local agent
+              Start the local agent
             </a>{" "}
-            to use a real scanner.
+            with the fingerprint reader connected.
           </span>
         </div>
       )}
@@ -164,7 +133,7 @@ export function BiometricSimulator({
       {/* Status text */}
       <div className="text-center">
         <p className="text-sm font-medium">
-          {visual === "idle"        && "Ready to scan"}
+          {visual === "idle"        && (fp.agentConnected ? "Ready to scan" : "Waiting for scanner…")}
           {visual === "scanning"    && <span className="animate-pulse">
             {fp.state === "waiting"    ? "Place finger on scanner…" :
              fp.state === "processing" ? "Matching…" :
@@ -181,9 +150,6 @@ export function BiometricSimulator({
             {fp.result.finger_used ? ` · ${fp.result.finger_used.replace("_", " ")}` : ""}
           </p>
         )}
-        {isSuccess && !fp.result && (
-          <p className="mt-1 text-xs text-muted-foreground">Quality: Excellent (demo)</p>
-        )}
         {fp.error && (
           <p className="mt-1 flex items-center justify-center gap-1 text-xs text-red-500">
             <AlertTriangle className="h-3 w-3" /> {fp.error}
@@ -193,7 +159,7 @@ export function BiometricSimulator({
 
       {/* Action button */}
       {visual === "idle" && (
-        <Button onClick={handleScanClick} className="gap-2" disabled={simRunning}>
+        <Button onClick={handleScanClick} className="gap-2" disabled={!fp.agentConnected}>
           <Fingerprint className="h-4 w-4" />
           {mode === "verify" ? "Scan to Identify" : "Scan Fingerprint"}
         </Button>

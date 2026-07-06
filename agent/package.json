@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "start:mock": "node index.js --mock",
     "start:fprintd": "SDK_TYPE=fprintd node index.js"
   },
   "dependencies": {

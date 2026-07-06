@@ -1,16 +1,29 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Fingerprint, FileText, UserX, Pencil } from "lucide-react";
+import { ChevronRight, Fingerprint, FileText, UserX, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Avatar } from "@/components/shared/Avatar";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { studentsApi } from "@/api/students";
+import { useAuthStore } from "@/store/authStore";
+import { formatApiError, type ApiError } from "@/api/client";
 import type { CaseListItem } from "@/types";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -21,6 +34,7 @@ function StudentDetailPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const isAdmin = useAuthStore((s) => s.user?.role === "ADMIN");
 
   const { data: s, isLoading } = useQuery({
     queryKey: ["student", id],
@@ -41,6 +55,16 @@ function StudentDetailPage() {
       navigate({ to: "/app/students" });
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  const purge = useMutation({
+    mutationFn: () => studentsApi.purge(id),
+    onSuccess: () => {
+      toast.success("Student permanently deleted");
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      navigate({ to: "/app/students" });
+    },
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
   });
 
   const cols: Column<CaseListItem>[] = [
@@ -93,6 +117,28 @@ function StudentDetailPage() {
                 <Button variant="destructive" size="sm" className="gap-1" onClick={() => deactivate.mutate()} disabled={deactivate.isPending}>
                   <UserX className="h-3.5 w-3.5" /> Deactivate
                 </Button>
+              )}
+              {isAdmin && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" className="gap-1" disabled={purge.isPending}>
+                      <Trash2 className="h-3.5 w-3.5" /> Delete Permanently
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Permanently delete {s.full_name}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This removes the student record entirely — not just deactivates it. This cannot be undone.
+                        It will fail if the student has any case history (deactivate instead in that case).
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => purge.mutate()}>Delete Permanently</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           </div>

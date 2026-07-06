@@ -20,6 +20,9 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Local fingerprint agent runtime data — one per workstation, never shared
+agent/templates.db
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

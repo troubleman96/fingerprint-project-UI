@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAppSettingsRouteImport } from './routes/_app.app.settings'
 import { Route as AppAppReportsRouteImport } from './routes/_app.app.reports'
+import { Route as AppAppNotificationsRouteImport } from './routes/_app.app.notifications'
 import { Route as AppAppDashboardRouteImport } from './routes/_app.app.dashboard'
 import { Route as AppAppAuditRouteImport } from './routes/_app.app.audit'
 import { Route as AppAppUsersIndexRouteImport } from './routes/_app.app.users.index'
@@ -51,6 +52,11 @@ const AppAppSettingsRoute = AppAppSettingsRouteImport.update({
 const AppAppReportsRoute = AppAppReportsRouteImport.update({
   id: '/app/reports',
   path: '/app/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppNotificationsRoute = AppAppNotificationsRouteImport.update({
+  id: '/app/notifications',
+  path: '/app/notifications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAppDashboardRoute = AppAppDashboardRouteImport.update({
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAppAuditRoute
   '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/notifications': typeof AppAppNotificationsRoute
   '/app/reports': typeof AppAppReportsRoute
   '/app/settings': typeof AppAppSettingsRoute
   '/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/audit': typeof AppAppAuditRoute
   '/app/dashboard': typeof AppAppDashboardRoute
+  '/app/notifications': typeof AppAppNotificationsRoute
   '/app/reports': typeof AppAppReportsRoute
   '/app/settings': typeof AppAppSettingsRoute
   '/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/app/audit': typeof AppAppAuditRoute
   '/_app/app/dashboard': typeof AppAppDashboardRoute
+  '/_app/app/notifications': typeof AppAppNotificationsRoute
   '/_app/app/reports': typeof AppAppReportsRoute
   '/_app/app/settings': typeof AppAppSettingsRoute
   '/_app/app/biometric/enroll': typeof AppAppBiometricEnrollRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/dashboard'
+    | '/app/notifications'
     | '/app/reports'
     | '/app/settings'
     | '/app/biometric/enroll'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/audit'
     | '/app/dashboard'
+    | '/app/notifications'
     | '/app/reports'
     | '/app/settings'
     | '/app/biometric/enroll'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/app/audit'
     | '/_app/app/dashboard'
+    | '/_app/app/notifications'
     | '/_app/app/reports'
     | '/_app/app/settings'
     | '/_app/app/biometric/enroll'
@@ -291,6 +303,13 @@ declare module '@tanstack/react-router' {
       path: '/app/reports'
       fullPath: '/app/reports'
       preLoaderRoute: typeof AppAppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/notifications': {
+      id: '/_app/app/notifications'
+      path: '/app/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppAppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/app/dashboard': {
@@ -420,6 +439,7 @@ const AppAppStudentsIdRouteWithChildren =
 interface AppRouteChildren {
   AppAppAuditRoute: typeof AppAppAuditRoute
   AppAppDashboardRoute: typeof AppAppDashboardRoute
+  AppAppNotificationsRoute: typeof AppAppNotificationsRoute
   AppAppReportsRoute: typeof AppAppReportsRoute
   AppAppSettingsRoute: typeof AppAppSettingsRoute
   AppAppBiometricEnrollRoute: typeof AppAppBiometricEnrollRoute
@@ -437,6 +457,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAppAuditRoute: AppAppAuditRoute,
   AppAppDashboardRoute: AppAppDashboardRoute,
+  AppAppNotificationsRoute: AppAppNotificationsRoute,
   AppAppReportsRoute: AppAppReportsRoute,
   AppAppSettingsRoute: AppAppSettingsRoute,
   AppAppBiometricEnrollRoute: AppAppBiometricEnrollRoute,

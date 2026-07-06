@@ -8,7 +8,7 @@ A small Node.js process that runs on any workstation with a USB fingerprint scan
 
 1. [Why a local agent exists](#1-why-a-local-agent-exists)
 2. [How it fits into the system](#2-how-it-fits-into-the-system)
-3. [Quick start — mock mode (no hardware)](#3-quick-start--mock-mode-no-hardware)
+3. [Quick start — real hardware (fprintd)](#3-quick-start--real-hardware-chipsailing-cs9711-via-fprintd)
 4. [Prerequisites](#4-prerequisites)
 5. [Installation](#5-installation)
 6. [Configuration](#6-configuration)
@@ -87,7 +87,7 @@ Hash path (non-reversible):
 │  ┌────────────────────────┐   ┌──────────────────────────────┐  │
 │  │  WebSocket server      │   │  Scanner abstraction layer   │  │
 │  │  port 4444             │   │                              │  │
-│  │  127.0.0.1 only        │   │  MockScanner  (--mock flag)  │  │
+│  │  127.0.0.1 only        │   │  FprintdScanner (real HW)    │  │
 │  └────────────────────────┘   │  SecuGenScanner              │  │
 │                               │  MantraScanner               │  │
 │  ┌────────────────────────┐   │  (add your own here)         │  │
@@ -108,24 +108,27 @@ Hash path (non-reversible):
 
 ---
 
-## 3. Quick start — mock mode (no hardware)
+## 3. Quick start — real hardware (Chipsailing CS9711 via fprintd)
 
-The agent runs in **mock mode** when no scanner is available. Scans are simulated with realistic 1.5-second delays. This is the default for development and demo environments.
+This agent only talks to real hardware — there is no simulated/mock mode. On Linux, once the CS9711 driver is installed (§7d), start with:
 
 ```bash
 cd agent
 npm install
-node index.js --mock
+npm run start:fprintd
 ```
 
 Expected output:
 ```
+[fprintd] Using system fprintd/libfprint for the CS9711.
 [agent] Fingerprint agent running on ws://127.0.0.1:4444
-[agent] Mode: MOCK (demo)
+[agent] Mode: HARDWARE (Chipsailing CS9711 (fprintd))
 [agent] Match threshold: 0.6
 ```
 
-The web app will show the green **"Mock Scanner (demo mode) ready"** banner in the biometric pages, indicating the connection succeeded.
+If the scanner can't be opened (driver not installed, device unplugged, etc.), the agent logs why and exits rather than pretending a scan succeeded — check §14 Troubleshooting.
+
+The web app will show a green "**<scanner name> ready**" banner in the biometric pages once connected.
 
 ---
 
@@ -135,7 +138,7 @@ The web app will show the green **"Mock Scanner (demo mode) ready"** banner in t
 - **Node.js 18 or later** — `node --version`
 - **npm 9+** — `npm --version`
 
-### For real hardware (non-mock)
+### For real hardware
 - **USB fingerprint scanner** — see [§7](#7-supported-scanners-and-sdk-wiring) for supported models
 - **Scanner driver** installed on the OS (see vendor instructions)
 - **Vendor SDK shared library** (`.dll` on Windows, `.so` on Linux) placed in the `agent/` directory
@@ -164,8 +167,7 @@ All configuration is via environment variables or CLI flags.
 
 | Variable | CLI flag | Default | Description |
 |---|---|---|---|
-| `FINGERPRINT_MOCK=1` | `--mock` | off | Force mock mode regardless of `SDK_TYPE` |
-| `SDK_TYPE` | — | `mock` | `secugen` / `mantra` / `fprintd` / `mock` |
+| `SDK_TYPE` | — | `fprintd` | `secugen` / `mantra` / `fprintd` |
 | `AGENT_PORT` | `--port <n>` | `4444` | WebSocket listen port |
 | `MATCH_THRESHOLD` | — | `0.6` | Minimum match score (0.0–1.0) to accept as a positive match |
 | `API_BASE` | — | `http://localhost:8000/api` | Django API base URL (reserved for future template sync) |
@@ -173,8 +175,8 @@ All configuration is via environment variables or CLI flags.
 ### Examples
 
 ```bash
-# Mock mode, default port
-node index.js --mock
+# Real CS9711 hardware, default port (SDK_TYPE=fprintd is also the default)
+npm run start:fprintd
 
 # SecuGen scanner on port 4444
 SDK_TYPE=secugen node index.js
@@ -389,13 +391,7 @@ Once installed:
 **Important limitation:** unlike Linux (where the community driver exposes the sensor through `fprintd`, which this agent can drive), there is **no known public raw SDK for the CS9711 on Windows** — only the WHQL/WBF driver that feeds into Windows' own credential system. That means, as of this writing, **`agent/index.js` cannot talk to this specific device on Windows** the way it does on Linux. Options for a Windows workstation:
 1. Use a scanner with a real published SDK — the agent already has stubs for **SecuGen** and **Mantra** (§7a/§7b) — and wire those up per their vendor docs.
 2. Request the raw capture SDK directly from ChipSailing/your hardware reseller (OEM fingerprint chip makers sometimes provide one under NDA to integrators, even when it isn't public) and add a `ChipsailingScanner` in `index.js` following the same `open()/close()/capture()/match()` pattern as the existing scanners (§15).
-3. Run the agent in `--mock` mode on Windows workstations for now, and reserve the real CS9711 hardware path for Linux workstations.
-
----
-
-### 7e. Mock (development / demo)
-
-No hardware, no SDK, no FFI. Uses `crypto.randomBytes(512)` as a synthetic template. Enrollment always succeeds; verification always matches the first enrolled template. Use `--mock` or `SDK_TYPE=mock`.
+3. Reserve the real CS9711 hardware path for Linux workstations for now, since there's no mock/simulated mode to fall back to on Windows either — this agent only talks to real hardware.
 
 ---
 
@@ -648,12 +644,12 @@ launchctl load ~/Library/LaunchAgents/com.disciplinetrack.agent.plist
 
 ## 14. Troubleshooting
 
-### Browser shows "Agent offline — running in demo mode"
+### Browser shows "Scanner offline — real hardware required"
 
 The browser tried `ws://localhost:4444` and got connection refused.
 
 1. Check if the agent is running: `lsof -i :4444` (Linux/Mac) or `netstat -ano | findstr 4444` (Windows)
-2. Start the agent: `node index.js --mock` to confirm basic connectivity first
+2. Start the agent: `npm run start:fprintd` (it exits immediately with a clear error if the hardware/driver isn't ready — there's no mock mode to fall back to)
 3. Check port match: `VITE_FINGERPRINT_AGENT_URL` in the UI's `.env.local` must match `AGENT_PORT`
 4. Firewall: confirm port 4444 is not blocked on the loopback interface
 
@@ -712,8 +708,8 @@ const MyScanner = {
 
   open() {
     // Load shared library via node-ffi-napi, initialise the device.
-    // Throw an Error if the device is not detected — the agent will
-    // fall back to MockScanner automatically.
+    // Throw an Error if the device is not detected — the agent logs it
+    // and exits (there is no mock fallback; real hardware only).
   },
 
   close() {
@@ -743,12 +739,13 @@ Then register it in `buildScanner()`:
 
 ```javascript
 function buildScanner() {
-  const type = (process.env.SDK_TYPE ?? "mock").toLowerCase();
+  const type = (process.env.SDK_TYPE ?? "fprintd").toLowerCase();
   switch (type) {
     case "secugen":   return SecuGenScanner;
     case "mantra":    return MantraScanner;
+    case "fprintd":   return FprintdScanner;
     case "myscanner": return MyScanner;    // ← add here
-    default:          return MockScanner;
+    default:          throw new Error(`Unknown SDK_TYPE '${type}'`);
   }
 }
 ```

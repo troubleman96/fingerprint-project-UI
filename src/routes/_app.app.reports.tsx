@@ -39,6 +39,15 @@ function ReportsPage() {
   const cases = casesRes?.data ?? [];
   const students = studentsRes?.data ?? [];
 
+  const runExport = async (dataset: "students" | "cases") => {
+    try {
+      await reportsApi.exportData(dataset, "csv");
+      toast.success(`${dataset === "students" ? "Students" : "Cases"} export downloaded`);
+    } catch {
+      toast.error("Export failed — admin access is required.");
+    }
+  };
+
   const byType = Object.entries(
     cases.reduce<Record<string, number>>((acc, c) => {
       acc[c.incident_type_name] = (acc[c.incident_type_name] ?? 0) + 1;
@@ -71,8 +80,8 @@ function ReportsPage() {
         title="Reports & Analytics"
         subtitle="Statistical analysis and export tools"
         actions={<>
-          <Button variant="outline" className="gap-2" onClick={() => toast.info("PDF export started")}><Download className="h-4 w-4" /> Export PDF</Button>
-          <Button className="gap-2" onClick={() => toast.info("CSV export started")}><FileText className="h-4 w-4" /> Export CSV</Button>
+          <Button variant="outline" className="gap-2" onClick={() => runExport("students")}><Download className="h-4 w-4" /> Export Students (CSV)</Button>
+          <Button className="gap-2" onClick={() => runExport("cases")}><FileText className="h-4 w-4" /> Export Cases (CSV)</Button>
         </>}
       />
 

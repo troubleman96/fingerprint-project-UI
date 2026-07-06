@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Avatar } from "@/components/shared/Avatar";
-import { BiometricSimulator } from "@/components/shared/BiometricSimulator";
+import { FingerprintScanner } from "@/components/shared/FingerprintScanner";
 import { biometricApi } from "@/api/biometric";
 import { reportsApi } from "@/api/reports";
 import type { FingerprintResult } from "@/hooks/useFingerprint";
@@ -104,7 +104,7 @@ function BiometricPage() {
           </DialogDescription>
 
           {!verified ? (
-            <BiometricSimulator
+            <FingerprintScanner
               mode="verify"
               onResult={handleVerifyResult}
               label={verifying ? "Checking database…" : "Fingerprint matched"}

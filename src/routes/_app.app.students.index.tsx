@@ -1,26 +1,59 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Download, Plus, Fingerprint } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Download, Plus, Fingerprint, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { Avatar } from "@/components/shared/Avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { studentsApi } from "@/api/students";
 import { departmentsApi } from "@/api/departments";
+import { reportsApi } from "@/api/reports";
+import { useAuthStore } from "@/store/authStore";
+import { formatApiError, type ApiError } from "@/api/client";
 import type { StudentListItem } from "@/types";
-import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/app/students/")({ component: StudentListPage });
 
 function StudentListPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const isAdmin = useAuthStore((s) => s.user?.role === "ADMIN");
   const [dept, setDept] = useState<string>("all");
   const [status, setStatus] = useState("all");
   const [bio, setBio] = useState("all");
+
+  const purge = useMutation({
+    mutationFn: (id: string) => studentsApi.purge(id),
+    onSuccess: () => {
+      toast.success("Student permanently deleted");
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+    },
+    onError: (e: ApiError) => toast.error(formatApiError(e)),
+  });
+
+  const runExport = async () => {
+    try {
+      await reportsApi.exportData("students", "csv");
+      toast.success("Students export downloaded");
+    } catch {
+      toast.error("Export failed — admin access is required.");
+    }
+  };
 
   const { data: deptsData } = useQuery({
     queryKey: ["departments"],
@@ -78,6 +111,37 @@ function StudentListPage() {
       header: "Status",
       render: (s) => <span className={`text-xs font-medium ${s.is_active ? "text-emerald-600" : "text-red-600"}`}>{s.is_active ? "Active" : "Inactive"}</span>,
     },
+    ...(isAdmin ? [{
+      key: "actions",
+      header: "",
+      render: (s: StudentListItem) => (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 text-red-600 hover:bg-red-500/10 hover:text-red-600"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently delete {s.full_name}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This removes the student record entirely — not just deactivates it. This cannot be undone.
+                It will fail if the student has any case history (deactivate instead in that case).
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => purge.mutate(s.id)}>Delete Permanently</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ),
+    } as Column<StudentListItem>] : []),
   ];
 
   return (
@@ -86,7 +150,7 @@ function StudentListPage() {
         title="Students"
         subtitle="Manage student profiles and biometric records"
         actions={<>
-          <Button variant="outline" className="gap-2" onClick={() => toast.info("Export started")}><Download className="h-4 w-4" /> Export CSV</Button>
+          <Button variant="outline" className="gap-2" onClick={runExport}><Download className="h-4 w-4" /> Export CSV</Button>
           <Button className="gap-2" onClick={() => navigate({ to: "/app/students/new" })}><Plus className="h-4 w-4" /> Register Student</Button>
         </>}
       />
